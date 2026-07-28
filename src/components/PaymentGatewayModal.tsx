@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
-  X, CheckCircle2, ShieldCheck, QrCode, Smartphone, CreditCard, Building2, Sparkles, ArrowRight
+  X, CheckCircle2, ShieldCheck, QrCode, Smartphone, CreditCard, Building2, ExternalLink, ArrowRight
 } from 'lucide-react';
 import { PaymentProvider, PaymentTransaction } from '../types';
 
@@ -26,12 +26,38 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [completedTx, setCompletedTx] = useState<PaymentTransaction | null>(null);
 
+  const launchUpiDeepLink = (appProvider: PaymentProvider, amt: number, purp: string) => {
+    const vpa = 'grow02.fintech@icici';
+    const payeeName = encodeURIComponent('Grow 0.2 Fintech');
+    const note = encodeURIComponent(purp || 'Payment');
+
+    let deepLink = `upi://pay?pa=${vpa}&pn=${payeeName}&am=${amt}&tn=${note}&cu=INR`;
+    if (appProvider === 'GPay') {
+      deepLink = `gpay://upi/pay?pa=${vpa}&pn=${payeeName}&am=${amt}&tn=${note}&cu=INR`;
+    } else if (appProvider === 'Paytm') {
+      deepLink = `paytmmp://pay?pa=${vpa}&pn=${payeeName}&am=${amt}&tn=${note}&cu=INR`;
+    } else if (appProvider === 'PhonePe') {
+      deepLink = `phonepe://pay?pa=${vpa}&pn=${payeeName}&am=${amt}&tn=${note}&cu=INR`;
+    }
+
+    try {
+      window.location.href = deepLink;
+    } catch (e) {
+      console.warn("UPI deep link fallback:", e);
+    }
+  };
+
   const handlePayNow = async (e: React.FormEvent) => {
     e.preventDefault();
     const payAmt = parseFloat(amount);
     if (!payAmt || payAmt <= 0) return;
 
     setIsProcessing(true);
+
+    // Launch GPay / Paytm / PhonePe app directly if selected
+    if (['GPay', 'Paytm', 'PhonePe', 'UPI_QR'].includes(provider)) {
+      launchUpiDeepLink(provider, payAmt, purpose);
+    }
 
     setTimeout(async () => {
       const tx = await processOnlinePayment(provider, payAmt, purpose);
@@ -58,7 +84,7 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
           <div className="py-6 text-center space-y-4">
             <CheckCircle2 className="w-14 h-14 text-emerald-400 mx-auto animate-bounce" />
             <div>
-              <h3 className="text-lg font-black text-white">Payment Successful!</h3>
+              <h3 className="text-lg font-black text-white">Payment App Launched & Recorded!</h3>
               <p className="text-xs text-slate-400 mt-1">Transaction Ref: <span className="font-mono text-emerald-400 font-bold">{completedTx.referenceNo}</span></p>
             </div>
 
@@ -91,7 +117,7 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
         ) : (
           <form onSubmit={handlePayNow} className="space-y-4 text-xs">
             <div>
-              <label className="block text-slate-400 mb-1">Select Purpose</label>
+              <label className="block text-slate-400 mb-1 font-semibold">Select Purpose</label>
               <select 
                 value={purpose}
                 onChange={(e) => setPurpose(e.target.value as any)}
@@ -106,7 +132,7 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-slate-400 mb-1">Payment Amount ({currencySymbol})</label>
+              <label className="block text-slate-400 mb-1 font-semibold">Payment Amount ({currencySymbol})</label>
               <input 
                 type="number"
                 value={amount}
@@ -118,7 +144,7 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
 
             {/* Payment Method Selector */}
             <div>
-              <label className="block text-slate-400 mb-2 font-semibold">Choose Payment Platform</label>
+              <label className="block text-slate-400 mb-2 font-semibold">Choose Payment App to Open</label>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
@@ -192,11 +218,11 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
               className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {isProcessing ? (
-                <span>Connecting to {provider} Gateway...</span>
+                <span>Launching {provider} App...</span>
               ) : (
                 <>
-                  <span>Proceed to Pay {currencySymbol}{parseFloat(amount || '0').toLocaleString()} via {provider}</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ExternalLink className="w-4 h-4" />
+                  <span>Open {provider} & Pay {currencySymbol}{parseFloat(amount || '0').toLocaleString()}</span>
                 </>
               )}
             </button>

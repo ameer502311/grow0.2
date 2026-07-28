@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
-  QrCode, Smartphone, Send, ScanLine, X, CheckCircle2, ArrowRight, ShieldCheck, UserCheck, Copy, Check
+  QrCode, Smartphone, Send, ScanLine, X, CheckCircle2, ArrowRight, ShieldCheck, ExternalLink, Copy, Check
 } from 'lucide-react';
 import { PaymentProvider } from '../types';
 
@@ -36,6 +36,28 @@ export const UpiScannerAndTransferModal: React.FC<UpiScannerAndTransferModalProp
     { name: 'Deepa Gupta', phone: '+91 95544 33221', upi: 'deepagupta@gpay' }
   ];
 
+  // Helper to trigger native UPI app launch link
+  const launchUpiAppDeepLink = (app: PaymentProvider, vpa: string, payee: string, amt: number, note: string) => {
+    const noteEncoded = encodeURIComponent(note || 'Grow 0.2 Payment');
+    const payeeEncoded = encodeURIComponent(payee || 'Recipient');
+    
+    let deepLink = `upi://pay?pa=${vpa}&pn=${payeeEncoded}&am=${amt}&tn=${noteEncoded}&cu=INR`;
+    
+    if (app === 'GPay') {
+      deepLink = `gpay://upi/pay?pa=${vpa}&pn=${payeeEncoded}&am=${amt}&tn=${noteEncoded}&cu=INR`;
+    } else if (app === 'Paytm') {
+      deepLink = `paytmmp://pay?pa=${vpa}&pn=${payeeEncoded}&am=${amt}&tn=${noteEncoded}&cu=INR`;
+    } else if (app === 'PhonePe') {
+      deepLink = `phonepe://pay?pa=${vpa}&pn=${payeeEncoded}&am=${amt}&tn=${noteEncoded}&cu=INR`;
+    }
+
+    try {
+      window.location.href = deepLink;
+    } catch (e) {
+      console.warn("UPI deep link launch fallback:", e);
+    }
+  };
+
   const handleSimulateQrScan = () => {
     setIsScanning(true);
     setTimeout(() => {
@@ -51,7 +73,14 @@ export const UpiScannerAndTransferModal: React.FC<UpiScannerAndTransferModalProp
     const amt = parseFloat(transferAmount);
     if (!amt || (!phoneNumber && !payeeName)) return;
 
-    const purposeText = `Send Money to ${payeeName || phoneNumber}`;
+    const targetVpa = sampleContacts.find(c => c.phone === phoneNumber)?.upi || `${phoneNumber.replace(/\D/g, '')}@upi`;
+    const targetName = payeeName || phoneNumber;
+    const purposeText = `Send Money to ${targetName}`;
+
+    // Launch native GPay / Paytm / PhonePe app
+    launchUpiAppDeepLink(selectedApp, targetVpa, targetName, amt, purposeText);
+
+    // Save transaction to backend API
     const tx = await processOnlinePayment(selectedApp, amt, purposeText as any);
     setPaymentSuccess(tx);
   };
@@ -60,7 +89,10 @@ export const UpiScannerAndTransferModal: React.FC<UpiScannerAndTransferModalProp
     const amt = parseFloat(scanAmount);
     if (!amt || !scannedUpiId) return;
 
-    const tx = await processOnlinePayment('UPI_QR', amt, `QR Pay to ${scannedMerchant}` as any);
+    const purposeText = `QR Pay to ${scannedMerchant}`;
+    launchUpiAppDeepLink('GPay', scannedUpiId, scannedMerchant, amt, purposeText);
+
+    const tx = await processOnlinePayment('UPI_QR', amt, purposeText as any);
     setPaymentSuccess(tx);
   };
 
@@ -116,14 +148,14 @@ export const UpiScannerAndTransferModal: React.FC<UpiScannerAndTransferModalProp
           <div className="py-4 text-center space-y-4">
             <CheckCircle2 className="w-14 h-14 text-emerald-400 mx-auto animate-bounce" />
             <div>
-              <h3 className="text-lg font-black text-white">Payment Sent Successfully!</h3>
+              <h3 className="text-lg font-black text-white">UPI Payment Triggered & Recorded!</h3>
               <p className="text-xs text-slate-400 mt-1">Ref No: <span className="font-mono text-emerald-400 font-bold">{paymentSuccess.referenceNo}</span></p>
             </div>
 
             <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs text-left space-y-1.5">
               <div className="flex justify-between text-slate-400">
-                <span>Paid via:</span>
-                <span className="font-bold text-white">{paymentSuccess.provider}</span>
+                <span>App Triggered:</span>
+                <span className="font-bold text-emerald-400">{paymentSuccess.provider} App</span>
               </div>
               <div className="flex justify-between text-slate-400">
                 <span>Amount:</span>
@@ -155,8 +187,8 @@ export const UpiScannerAndTransferModal: React.FC<UpiScannerAndTransferModalProp
                     </div>
 
                     <div>
-                      <p className="font-bold text-slate-200 text-xs">Point Camera at GPay / Paytm / PhonePe / BharatPe QR</p>
-                      <p className="text-[10px] text-slate-500 mt-0.5">Supports all standard NPCI UPI QR codes</p>
+                      <p className="font-bold text-slate-200 text-xs">Point Camera at GPay / Paytm / PhonePe / BHIM QR</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Launches native payment app directly on click</p>
                     </div>
 
                     <button 
@@ -193,8 +225,8 @@ export const UpiScannerAndTransferModal: React.FC<UpiScannerAndTransferModalProp
                       onClick={handleExecuteScanPayment}
                       className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <span>Pay {currencySymbol}{parseFloat(scanAmount || '0').toLocaleString()} to {scannedMerchant}</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <ExternalLink className="w-4 h-4" />
+                      <span>Open GPay / UPI App & Pay {currencySymbol}{parseFloat(scanAmount || '0').toLocaleString()}</span>
                     </button>
                   </div>
                 )}
@@ -249,7 +281,7 @@ export const UpiScannerAndTransferModal: React.FC<UpiScannerAndTransferModalProp
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1 font-semibold">Send via App Intent</label>
+                  <label className="block text-slate-400 mb-1 font-semibold">Select Payment App to Open</label>
                   <div className="flex space-x-2">
                     {(['GPay', 'Paytm', 'PhonePe'] as const).map(app => (
                       <button 
@@ -268,8 +300,8 @@ export const UpiScannerAndTransferModal: React.FC<UpiScannerAndTransferModalProp
                   type="submit"
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <Send className="w-4 h-4" />
-                  <span>Send Money via {selectedApp}</span>
+                  <ExternalLink className="w-4 h-4" />
+                  <span>Launch {selectedApp} App & Send Money</span>
                 </button>
               </form>
             )}
