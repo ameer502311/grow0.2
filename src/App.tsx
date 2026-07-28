@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AppProvider, useApp } from './context/AppContext';
+import { useApp } from './context/AppContext';
 import { Header } from './components/Header';
 import { Sidebar, ActiveTab } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
@@ -10,188 +10,175 @@ import { AiAdvisor } from './components/AiAdvisor';
 import { NewsFeed } from './components/NewsFeed';
 import { EmiManager } from './components/EmiManager';
 import { Reports } from './components/Reports';
+import { PlatformIntegrations } from './components/PlatformIntegrations';
 import { AdminPanel } from './components/AdminPanel';
 import { AuthModal } from './components/AuthModal';
 import { SmartFeaturesModal } from './components/SmartFeaturesModal';
-import { PlatformIntegrations } from './components/PlatformIntegrations';
 import { PaymentGatewayModal } from './components/PaymentGatewayModal';
 
-const AppContent: React.FC = () => {
-  const { addIncome, addExpense, currencySymbol } = useApp();
+export const App: React.FC = () => {
+  const { user, addIncome, addExpense } = useApp();
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   
   // Modals state
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showSmartModal, setShowSmartModal] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [addEntryModal, setAddEntryModal] = useState<'income' | 'expense' | null>(null);
+  const [showSmartFeaturesModal, setShowSmartFeaturesModal] = useState(false);
+  const [showPaymentGatewayModal, setShowPaymentGatewayModal] = useState(false);
+  const [paymentModalProps, setPaymentModalProps] = useState<{ amount?: number; purpose?: any }>({});
 
-  // Modal Form State
-  const [entryAmount, setEntryAmount] = useState('');
-  const [entryCategory, setEntryCategory] = useState<any>('Food');
-  const [entryNotes, setEntryNotes] = useState('');
-  const [entryDate, setEntryDate] = useState(new Date().toISOString().slice(0, 10));
+  // Quick Add modal
+  const [showQuickAddModal, setShowQuickAddModal] = useState<'income' | 'expense' | null>(null);
+  const [quickAmount, setQuickAmount] = useState('');
+  const [quickCategory, setQuickCategory] = useState('');
+  const [quickNotes, setQuickNotes] = useState('');
 
-  const handleCreateEntry = (e: React.FormEvent) => {
+  const handleOpenPayment = (amount?: number, purpose?: any) => {
+    setPaymentModalProps({ amount, purpose });
+    setShowPaymentGatewayModal(true);
+  };
+
+  const handleQuickAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!entryAmount) return;
+    const amt = parseFloat(quickAmount);
+    if (!amt || !quickCategory) return;
 
-    if (addEntryModal === 'income') {
+    if (showQuickAddModal === 'income') {
       addIncome({
-        amount: Number(entryAmount),
-        date: entryDate,
-        category: entryCategory || 'Salary',
-        notes: entryNotes
+        amount: amt,
+        category: quickCategory,
+        notes: quickNotes || 'Quick Add Income',
+        date: new Date().toISOString().slice(0, 10)
       });
     } else {
       addExpense({
-        amount: Number(entryAmount),
-        date: entryDate,
-        category: entryCategory || 'Food',
-        notes: entryNotes
+        amount: amt,
+        category: quickCategory,
+        notes: quickNotes || 'Quick Add Expense',
+        date: new Date().toISOString().slice(0, 10)
       });
     }
 
-    setEntryAmount('');
-    setEntryNotes('');
-    setAddEntryModal(null);
+    setQuickAmount('');
+    setQuickCategory('');
+    setQuickNotes('');
+    setShowQuickAddModal(null);
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 font-sans">
+    <div className="min-h-screen bg-money-banking text-slate-100 flex flex-col font-sans selection:bg-amber-500/30 selection:text-amber-200">
       {/* Header */}
       <Header 
-        onOpenAuth={() => setShowAuthModal(true)}
-        onOpenSmartFeatures={() => setShowSmartModal(true)}
+        onOpenAuth={() => setShowAuthModal(true)} 
+        onOpenSmartFeatures={() => setShowSmartFeaturesModal(true)}
       />
 
-      {/* Main Layout Container */}
-      <div className="flex-1 flex flex-col lg:flex-row max-w-[1600px] w-full mx-auto p-4 lg:p-6 gap-6">
-        {/* Sidebar */}
+      {/* Main Content Area */}
+      <div className="flex-1 flex max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 gap-6">
+        {/* Sidebar Navigation */}
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-        {/* Viewport Content Area */}
+        {/* Tab View Router */}
         <main className="flex-1 min-w-0">
           {activeTab === 'dashboard' && (
             <Dashboard 
-              setActiveTab={setActiveTab}
-              onOpenAddModal={(type) => setAddEntryModal(type)}
-              onOpenSmartFeatures={() => setShowSmartModal(true)}
+              setActiveTab={setActiveTab} 
+              onOpenAddModal={(type) => setShowQuickAddModal(type)}
+              onOpenSmartFeatures={() => setShowSmartFeaturesModal(true)}
             />
           )}
 
-          {activeTab === 'finance' && (
-            <PersonalFinance 
-              onOpenAddModal={(type) => setAddEntryModal(type)}
-            />
+          {activeTab === 'personal_finance' && (
+            <PersonalFinance onOpenAddModal={(type) => setShowQuickAddModal(type)} />
           )}
 
-          {activeTab === 'investments' && <Investments />}
-          {activeTab === 'integrations' && <PlatformIntegrations />}
+          {activeTab === 'investments' && (
+            <Investments onOpenBuyGold={(amt) => handleOpenPayment(amt, 'Digital Gold Buy')} />
+          )}
+
+          {activeTab === 'platforms' && (
+            <PlatformIntegrations onOpenPayment={(amt, purp) => handleOpenPayment(amt, purp)} />
+          )}
+
           {activeTab === 'calculators' && <Calculators />}
+
           {activeTab === 'ai' && <AiAdvisor />}
+
           {activeTab === 'news' && <NewsFeed />}
-          {activeTab === 'loans' && <EmiManager />}
+
+          {activeTab === 'loans' && (
+            <EmiManager onOpenPayment={(amt, purp) => handleOpenPayment(amt, purp)} />
+          )}
+
           {activeTab === 'reports' && <Reports />}
+
           {activeTab === 'admin' && <AdminPanel />}
         </main>
       </div>
 
-      {/* Auth Modal */}
+      {/* Global Modals */}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+      {showSmartFeaturesModal && <SmartFeaturesModal onClose={() => setShowSmartFeaturesModal(false)} />}
+      {showPaymentGatewayModal && (
+        <PaymentGatewayModal 
+          onClose={() => setShowPaymentGatewayModal(false)}
+          defaultAmount={paymentModalProps.amount}
+          defaultPurpose={paymentModalProps.purpose}
+        />
+      )}
 
-      {/* Voice & OCR Smart Features Modal */}
-      {showSmartModal && <SmartFeaturesModal onClose={() => setShowSmartModal(false)} />}
-
-      {/* Standalone Payment Gateway Launcher Modal */}
-      {showPaymentModal && <PaymentGatewayModal onClose={() => setShowPaymentModal(false)} />}
-
-      {/* Quick Add Income / Expense Modal */}
-      {addEntryModal && (
+      {/* Quick Add Income/Expense Modal */}
+      {showQuickAddModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="glass-panel rounded-3xl p-6 bg-slate-900 border-slate-800 max-w-md w-full space-y-4">
-            <h2 className="text-lg font-bold text-white capitalize">Add {addEntryModal}</h2>
-            <form onSubmit={handleCreateEntry} className="space-y-3 text-xs">
+            <h3 className="text-lg font-bold text-white capitalize">
+              Add Quick {showQuickAddModal}
+            </h3>
+            <form onSubmit={handleQuickAddSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-400 mb-1">Amount ({currencySymbol})</label>
+                <label className="block text-slate-400 mb-1">Amount</label>
                 <input 
-                  type="number"
-                  placeholder="2500"
-                  value={entryAmount}
-                  onChange={(e) => setEntryAmount(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:border-emerald-500"
+                  type="number" 
+                  placeholder="e.g. 5000"
+                  value={quickAmount}
+                  onChange={(e) => setQuickAmount(e.target.value)}
+                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 font-bold text-base focus:outline-none focus:border-amber-500"
                   required
                 />
               </div>
-
               <div>
                 <label className="block text-slate-400 mb-1">Category</label>
-                {addEntryModal === 'income' ? (
-                  <select 
-                    value={entryCategory} 
-                    onChange={(e) => setEntryCategory(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200"
-                  >
-                    <option value="Salary">Salary</option>
-                    <option value="Freelance">Freelance</option>
-                    <option value="Business">Business</option>
-                    <option value="Rental">Rental</option>
-                    <option value="Bonus">Bonus</option>
-                    <option value="Other Income">Other Income</option>
-                  </select>
-                ) : (
-                  <select 
-                    value={entryCategory} 
-                    onChange={(e) => setEntryCategory(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200"
-                  >
-                    <option value="Food">Food</option>
-                    <option value="Shopping">Shopping</option>
-                    <option value="Travel">Travel</option>
-                    <option value="Fuel">Fuel</option>
-                    <option value="Medical">Medical</option>
-                    <option value="Utilities">Utilities</option>
-                    <option value="EMI">EMI</option>
-                    <option value="Rent">Rent</option>
-                    <option value="Entertainment">Entertainment</option>
-                  </select>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-slate-400 mb-1">Date</label>
                 <input 
-                  type="date"
-                  value={entryDate}
-                  onChange={(e) => setEntryDate(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200"
+                  type="text" 
+                  placeholder={showQuickAddModal === 'income' ? 'Salary, Freelance, Rental' : 'Food, Rent, Fuel, Shopping'}
+                  value={quickCategory}
+                  onChange={(e) => setQuickCategory(e.target.value)}
+                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 focus:outline-none focus:border-amber-500"
+                  required
                 />
               </div>
-
               <div>
-                <label className="block text-slate-400 mb-1">Notes / Description</label>
+                <label className="block text-slate-400 mb-1">Notes (Optional)</label>
                 <input 
-                  type="text"
-                  placeholder="e.g. Grocery items or Project payment"
-                  value={entryNotes}
-                  onChange={(e) => setEntryNotes(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200"
+                  type="text" 
+                  placeholder="Details..."
+                  value={quickNotes}
+                  onChange={(e) => setQuickNotes(e.target.value)}
+                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 focus:outline-none focus:border-amber-500"
                 />
               </div>
-
-              <div className="flex justify-end space-x-2 pt-2">
+              <div className="flex space-x-2 pt-2">
                 <button 
                   type="button" 
-                  onClick={() => setAddEntryModal(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-400 hover:text-slate-200"
+                  onClick={() => setShowQuickAddModal(null)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold"
                 >
                   Cancel
                 </button>
                 <button 
-                  type="submit" 
-                  className={`px-4 py-2 rounded-xl text-white font-bold ${addEntryModal === 'income' ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold shadow-lg shadow-amber-500/20"
                 >
-                  Save {addEntryModal}
+                  Save Entry
                 </button>
               </div>
             </form>
@@ -201,13 +188,5 @@ const AppContent: React.FC = () => {
     </div>
   );
 };
-
-export function App() {
-  return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
-  );
-}
 
 export default App;
