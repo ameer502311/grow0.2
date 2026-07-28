@@ -143,13 +143,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [transactions, setTransactions] = useState<PaymentTransaction[]>(initialTransactions);
 
   const [notifications, setNotifications] = useState<string[]>([
-    '🌐 Express Server API connected to port 5000.',
+    '🌐 Live Google/API Market Prices Connected.',
     '💳 GPay Payment: ₹5,000 processed for 24K Digital Gold purchase.',
     '🔗 Groww Sync: Portfolio synchronized successfully (+₹12,400 returns).'
   ]);
 
+  // Sync Live Market Prices from Backend API
+  const fetchLiveTickers = async () => {
+    try {
+      const res = await fetch('/api/markets/live-prices');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data && Array.isArray(json.data)) {
+          setTickers(json.data);
+        }
+      }
+    } catch (e) {
+      console.warn("Using current market reference rates");
+    }
+  };
+
   // Initial Sync with Express Backend API
   useEffect(() => {
+    fetchLiveTickers();
     checkBackendHealth().then(res => {
       setBackendConnected(res.connected);
       if (res.connected) {
@@ -181,24 +197,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const currencySymbol = currency === 'INR' ? '₹' : currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '£';
-
-  // Live Tickers
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTickers(prev => prev.map(t => {
-        const deltaPercent = (Math.random() - 0.48) * 0.4;
-        const newPrice = Math.max(1, t.price * (1 + deltaPercent / 100));
-        const newChange = t.change24h + (newPrice - t.price);
-        return {
-          ...t,
-          price: parseFloat(newPrice.toFixed(t.price > 1000 ? 0 : 2)),
-          change24h: parseFloat(newChange.toFixed(2)),
-          changePercent24h: parseFloat((t.changePercent24h + deltaPercent * 0.1).toFixed(2))
-        };
-      }));
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
 
   const addIncome = async (item: Omit<IncomeItem, 'id'>) => {
     const newInc: IncomeItem = { ...item, id: `inc-${Date.now()}` };

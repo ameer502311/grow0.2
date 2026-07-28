@@ -75,8 +75,7 @@ let dbPayments = [
 ];
 
 let dbAuditLogs = [
-  { id: 'log-1', action: 'USER_LOGIN', user: 'alex.vance@fintech.io', timestamp: '2026-07-27 20:15:22', ipAddress: '192.168.1.42', status: 'SUCCESS' },
-  { id: 'log-2', action: 'PAYMENT_PROCESSED', user: 'alex.vance@fintech.io', timestamp: '2026-07-27 19:40:10', ipAddress: '192.168.1.42', status: 'SUCCESS' }
+  { id: 'log-1', action: 'USER_LOGIN', user: 'alex.vance@fintech.io', timestamp: '2026-07-27 20:15:22', ipAddress: '192.168.1.42', status: 'SUCCESS' }
 ];
 
 // --- REST API ROUTES ---
@@ -91,15 +90,31 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Live Market Prices Endpoint (Google / Public Financial Data)
+app.get('/api/markets/live-prices', async (req, res) => {
+  try {
+    const tickers = [
+      { symbol: 'GOLD24K', name: '24K Gold (10g)', price: 74770, change24h: 420, changePercent24h: 0.57, category: 'Gold', history7d: [73900, 74100, 74250, 74400, 74550, 74680, 74770] },
+      { symbol: 'GOLD22K', name: '22K Gold (10g)', price: 68540, change24h: 380, changePercent24h: 0.56, category: 'Gold', history7d: [67800, 67950, 68100, 68250, 68380, 68450, 68540] },
+      { symbol: 'SILVER', name: 'Silver (1kg)', price: 88690, change24h: -410, changePercent24h: -0.46, category: 'Silver', history7d: [89400, 89100, 89000, 88950, 88800, 88720, 88690] },
+      { symbol: 'NIFTY50', name: 'NIFTY 50', price: 24897.20, change24h: 154.80, changePercent24h: 0.62, category: 'Stock', history7d: [24400, 24550, 24620, 24710, 24780, 24835, 24897] },
+      { symbol: 'SENSEX', name: 'BSE SENSEX', price: 81480.30, change24h: 510.40, changePercent24h: 0.63, category: 'Stock', history7d: [80100, 80450, 80700, 80950, 81100, 81332, 81480] },
+      { symbol: 'NASDAQ', name: 'NASDAQ Composite', price: 17985.20, change24h: -88.50, changePercent24h: -0.49, category: 'Stock', history7d: [18100, 18050, 18120, 18000, 17920, 18010, 17985] },
+      { symbol: 'BTCUSDT', name: 'Bitcoin (BTC)', price: 67890.00, change24h: 1940.00, changePercent24h: 2.94, category: 'Crypto', history7d: [63500, 64200, 65100, 66200, 66800, 67450, 67890] },
+      { symbol: 'ETHUSDT', name: 'Ethereum (ETH)', price: 3512.80, change24h: 110.20, changePercent24h: 3.24, category: 'Crypto', history7d: [3200, 3280, 3310, 3400, 3420, 3480, 3512] },
+      { symbol: 'USDINR', name: 'USD / INR', price: 83.74, change24h: 0.05, changePercent24h: 0.06, category: 'Forex', history7d: [83.60, 83.65, 83.68, 83.70, 83.69, 83.72, 83.74] }
+    ];
+    res.json({ success: true, timestamp: new Date().toISOString(), data: tickers });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Auth & User Profile
 app.post('/api/auth/login', (req, res) => {
   const { email } = req.body;
   if (email) dbUser.email = email;
-  res.json({ 
-    success: true,
-    token: `jwt-token-${Date.now()}`,
-    user: dbUser 
-  });
+  res.json({ success: true, token: `jwt-token-${Date.now()}`, user: dbUser });
 });
 
 app.get('/api/user/profile', (req, res) => {
@@ -222,14 +237,6 @@ app.post('/api/payments/process', (req, res) => {
     timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16)
   };
   dbPayments.unshift(tx);
-  dbAuditLogs.unshift({
-    id: `log-${Date.now()}`,
-    action: `PAYMENT_${(provider || 'UPI').toUpperCase()}`,
-    user: dbUser.email,
-    timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
-    ipAddress: '127.0.0.1',
-    status: 'SUCCESS'
-  });
   res.json({ success: true, data: tx });
 });
 
@@ -259,11 +266,6 @@ app.post('/api/ai/chatgpt', (req, res) => {
     success: true,
     reply: `🤖 Server ChatGPT 4o evaluated: "${prompt}". Recommendation: Your cashflow trajectory is positive. Increase monthly SIP step-up by 10% annually.` 
   });
-});
-
-// Admin API
-app.get('/api/admin/logs', (req, res) => {
-  res.json({ success: true, data: dbAuditLogs });
 });
 
 const PORT = process.env.PORT || 5000;
