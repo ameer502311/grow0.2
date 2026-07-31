@@ -10,15 +10,15 @@ import { AiModelProvider } from '../types';
 export const AiAdvisor: React.FC = () => {
   const { user, setUser, healthScore, incomes, expenses, investments, currencySymbol } = useApp();
 
-  const [aiModel, setAiModel] = useState<AiModelProvider>(user.preferredAiModel || 'CHATGPT');
+  const [aiModel, setAiModel] = useState<AiModelProvider>(user.preferredAiModel || 'GEMINI');
   const [promptInput, setPromptInput] = useState('');
   const [loading, setLoading] = useState(false);
   
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai'; text: string; model?: string }[]>([
     { 
       role: 'ai', 
-      text: "Hello Alex! I am your Grow 0.2 AI Financial Advisor powered by ChatGPT & Gemini. How can I optimize your cash flow, tax strategy, or gold portfolio today?",
-      model: 'ChatGPT'
+      text: "Hello Alex! I am your Grow 0.2 AI Financial Advisor powered by Google Gemini 1.5. How can I optimize your cash flow, tax strategy, or gold & stock portfolio today?",
+      model: 'Google Gemini'
     }
   ]);
 
@@ -44,13 +44,13 @@ export const AiAdvisor: React.FC = () => {
     };
 
     let reply = '';
-    if (aiModel === 'CHATGPT') {
-      reply = await askChatGptAdvisor(userMsg, user.openaiApiKey, statsContext);
-    } else {
+    if (aiModel === 'GEMINI') {
       reply = await askGeminiAdvisor(userMsg, user.geminiApiKey, statsContext);
+    } else {
+      reply = await askChatGptAdvisor(userMsg, user.openaiApiKey, statsContext);
     }
 
-    setChatMessages(prev => [...prev, { role: 'ai', text: reply, model: aiModel === 'CHATGPT' ? 'ChatGPT 4o' : 'Gemini 1.5' }]);
+    setChatMessages(prev => [...prev, { role: 'ai', text: reply, model: aiModel === 'GEMINI' ? 'Google Gemini 1.5' : 'ChatGPT 4o' }]);
     setLoading(false);
   };
 
@@ -77,10 +77,10 @@ export const AiAdvisor: React.FC = () => {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 glass-panel rounded-3xl p-5 bg-gradient-to-r from-slate-900 via-slate-900 to-purple-950/40 border-slate-800">
         <div>
           <div className="flex items-center space-x-2 text-xs font-bold text-purple-400 mb-1 uppercase tracking-wider">
-            <Bot className="w-4 h-4" /> Dual AI Intelligence Hub (ChatGPT + Gemini)
+            <Sparkles className="w-4 h-4 text-amber-400" /> Powered by Google Gemini 1.5 Flash AI
           </div>
           <h1 className="text-xl font-extrabold text-white">AI Financial Advisor & Health Score</h1>
-          <p className="text-xs text-slate-400">Switch seamlessly between ChatGPT (OpenAI GPT-4o) and Google Gemini 1.5 Flash for personalized wealth advice.</p>
+          <p className="text-xs text-slate-400">Google Gemini AI analyzes your spending habits, tax planning, and investment growth in real-time.</p>
         </div>
 
         {/* Model Switcher Buttons & Key Drawer Button */}
@@ -88,23 +88,23 @@ export const AiAdvisor: React.FC = () => {
           {/* Engine Selector */}
           <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-bold">
             <button 
+              onClick={() => setAiModel('GEMINI')}
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${aiModel === 'GEMINI' ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-md' : 'text-slate-400'}`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" /> Google Gemini
+            </button>
+            <button 
               onClick={() => setAiModel('CHATGPT')}
               className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${aiModel === 'CHATGPT' ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md' : 'text-slate-400'}`}
             >
               <Cpu className="w-3.5 h-3.5" /> ChatGPT (GPT-4o)
-            </button>
-            <button 
-              onClick={() => setAiModel('GEMINI')}
-              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${aiModel === 'GEMINI' ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-md' : 'text-slate-400'}`}
-            >
-              <Sparkles className="w-3.5 h-3.5" /> Google Gemini
             </button>
           </div>
 
           <button 
             onClick={() => setShowKeySetting(!showKeySetting)}
             className="p-2.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 text-xs font-semibold transition-all"
-            title="Configure OpenAI ChatGPT & Gemini API Keys"
+            title="Configure Google Gemini & OpenAI API Keys"
           >
             <Key className="w-4 h-4" />
           </button>
@@ -115,19 +115,9 @@ export const AiAdvisor: React.FC = () => {
       {showKeySetting && (
         <div className="glass-panel rounded-3xl p-5 bg-slate-900 border-slate-800 space-y-4 max-w-md">
           <h3 className="font-bold text-xs text-slate-200">Configure AI Model API Keys</h3>
-          <p className="text-[11px] text-slate-400">Enter your OpenAI ChatGPT API key or Google Gemini API key. If left blank, Grow 0.2 connects via Express Backend Proxy endpoints.</p>
+          <p className="text-[11px] text-slate-400">Enter your Google Gemini API key or OpenAI API key. If left blank, Grow 0.2 connects via Express Backend Proxy endpoints.</p>
           
           <div className="space-y-3 text-xs">
-            <div>
-              <label className="block text-slate-400 mb-1 font-semibold">OpenAI ChatGPT API Key (sk-...)</label>
-              <input 
-                type="password" 
-                placeholder="sk-proj-..."
-                value={openaiKeyInput}
-                onChange={(e) => setOpenaiKeyInput(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:border-emerald-500"
-              />
-            </div>
             <div>
               <label className="block text-slate-400 mb-1 font-semibold">Google Gemini API Key (AIza...)</label>
               <input 
@@ -136,6 +126,16 @@ export const AiAdvisor: React.FC = () => {
                 value={geminiKeyInput}
                 onChange={(e) => setGeminiKeyInput(e.target.value)}
                 className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:border-purple-500"
+              />
+            </div>
+            <div>
+              <label className="block text-slate-400 mb-1 font-semibold">OpenAI ChatGPT API Key (sk-...)</label>
+              <input 
+                type="password" 
+                placeholder="sk-proj-..."
+                value={openaiKeyInput}
+                onChange={(e) => setOpenaiKeyInput(e.target.value)}
+                className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:border-emerald-500"
               />
             </div>
           </div>
@@ -196,7 +196,7 @@ export const AiAdvisor: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 glass-panel rounded-3xl p-6 bg-slate-900/60 border-slate-800 space-y-4">
           <h2 className="text-sm font-bold text-white flex items-center gap-2">
-            <BarChart2 className="w-4 h-4 text-purple-400" /> AI Cash Flow & Budget Forecast (Next Month)
+            <BarChart2 className="w-4 h-4 text-purple-400" /> Gemini AI Cash Flow & Budget Forecast (Next Month)
           </h2>
 
           <div className="grid grid-cols-3 gap-3">
@@ -218,12 +218,12 @@ export const AiAdvisor: React.FC = () => {
           </div>
         </div>
 
-        {/* Dual AI Chat Assistant Box (ChatGPT + Gemini) */}
+        {/* AI Chat Assistant Box (Google Gemini) */}
         <div className="glass-panel rounded-3xl p-5 bg-slate-900/80 border-slate-800 flex flex-col justify-between h-[420px]">
           <div className="flex items-center justify-between pb-3 border-b border-slate-800">
             <span className="text-xs font-bold text-purple-300 flex items-center gap-1.5">
-              <Bot className="w-4 h-4 text-emerald-400" /> 
-              {aiModel === 'CHATGPT' ? 'ChatGPT 4o Assistant' : 'Gemini 1.5 Assistant'}
+              <Sparkles className="w-4 h-4 text-amber-400" /> 
+              {aiModel === 'GEMINI' ? 'Google Gemini 1.5 AI Assistant' : 'ChatGPT 4o Assistant'}
             </span>
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
           </div>
@@ -239,7 +239,7 @@ export const AiAdvisor: React.FC = () => {
                 }`}
               >
                 {msg.model && (
-                  <span className="text-[9px] font-bold text-emerald-400 uppercase block mb-1">
+                  <span className="text-[9px] font-bold text-amber-400 uppercase block mb-1">
                     [{msg.model}]
                   </span>
                 )}
@@ -248,7 +248,7 @@ export const AiAdvisor: React.FC = () => {
             ))}
             {loading && (
               <div className="p-3 rounded-2xl bg-slate-950 text-slate-400 text-xs animate-pulse">
-                {aiModel === 'CHATGPT' ? 'ChatGPT is analyzing your cash flows...' : 'Gemini AI is analyzing your cash flows...'}
+                {aiModel === 'GEMINI' ? 'Google Gemini AI is analyzing your cash flows...' : 'ChatGPT is analyzing your cash flows...'}
               </div>
             )}
           </div>
@@ -256,15 +256,15 @@ export const AiAdvisor: React.FC = () => {
           <form onSubmit={handleSendMessage} className="relative">
             <input 
               type="text"
-              placeholder={`Ask ${aiModel === 'CHATGPT' ? 'ChatGPT' : 'Gemini'} about spending, stocks, or tax...`}
+              placeholder={`Ask ${aiModel === 'GEMINI' ? 'Google Gemini' : 'ChatGPT'} about spending, stocks, or tax...`}
               value={promptInput}
               onChange={(e) => setPromptInput(e.target.value)}
-              className="w-full pl-3 pr-10 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
+              className="w-full pl-3 pr-10 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
             />
             <button 
               type="submit"
               disabled={loading}
-              className="absolute right-2 top-2 p-1 text-emerald-400 hover:text-emerald-300 disabled:opacity-50"
+              className="absolute right-2 top-2 p-1 text-amber-400 hover:text-amber-300 disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
             </button>

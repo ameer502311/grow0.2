@@ -71,7 +71,7 @@ const defaultUser: UserProfile = {
   isVerified: true,
   currency: 'INR',
   monthlyIncomeTarget: 185000,
-  preferredAiModel: 'CHATGPT',
+  preferredAiModel: 'GEMINI',
   geminiApiKey: SYSTEM_DEFAULT_AI_KEY,
   openaiApiKey: SYSTEM_DEFAULT_AI_KEY
 };
@@ -145,7 +145,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [transactions, setTransactions] = useState<PaymentTransaction[]>(initialTransactions);
 
   const [notifications, setNotifications] = useState<string[]>([
-    '🤖 AI Engine Configured with your System API Key.',
+    '✨ Google Gemini 1.5 AI Advisor connected as primary AI engine.',
     '💳 GPay Payment: ₹5,000 processed for 24K Digital Gold purchase.',
     '🔗 Groww Sync: Portfolio synchronized successfully (+₹12,400 returns).'
   ]);
