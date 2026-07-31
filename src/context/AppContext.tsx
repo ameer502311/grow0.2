@@ -61,6 +61,8 @@ interface AppContextType {
   dismissNotification: (index: number) => void;
 }
 
+const SYSTEM_DEFAULT_AI_KEY = (import.meta as any).env?.VITE_AI_API_KEY || (typeof process !== 'undefined' ? process.env.AI_API_KEY : '') || '';
+
 const defaultUser: UserProfile = {
   id: 'u-101',
   name: 'Alex Vance',
@@ -70,8 +72,8 @@ const defaultUser: UserProfile = {
   currency: 'INR',
   monthlyIncomeTarget: 185000,
   preferredAiModel: 'CHATGPT',
-  geminiApiKey: '',
-  openaiApiKey: ''
+  geminiApiKey: SYSTEM_DEFAULT_AI_KEY,
+  openaiApiKey: SYSTEM_DEFAULT_AI_KEY
 };
 
 const initialIncomes: IncomeItem[] = [
@@ -143,12 +145,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [transactions, setTransactions] = useState<PaymentTransaction[]>(initialTransactions);
 
   const [notifications, setNotifications] = useState<string[]>([
-    '🌐 Live Google/API Market Prices Connected.',
+    '🤖 AI Engine Configured with your System API Key.',
     '💳 GPay Payment: ₹5,000 processed for 24K Digital Gold purchase.',
     '🔗 Groww Sync: Portfolio synchronized successfully (+₹12,400 returns).'
   ]);
 
-  // Sync Live Market Prices from Backend API
   const fetchLiveTickers = async () => {
     try {
       const res = await fetch('/api/markets/live-prices');
@@ -163,7 +164,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Initial Sync with Express Backend API
   useEffect(() => {
     fetchLiveTickers();
     checkBackendHealth().then(res => {
@@ -253,7 +253,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await payBackendEmi(id);
   };
 
-  // Online Payment Processor & Server Sync
   const processOnlinePayment = async (
     provider: PaymentProvider, 
     amount: number, 
