@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { CreditCard, Calendar, CheckCircle2, AlertCircle, Plus, ShieldCheck } from 'lucide-react';
-import { LoanItem } from '../types';
+import { LoanItem, PaymentTransaction } from '../types';
 
-export const EmiManager: React.FC = () => {
+export interface EmiManagerProps {
+  onOpenPayment?: (amount?: number, purpose?: PaymentTransaction['purpose']) => void;
+}
+
+export const EmiManager: React.FC<EmiManagerProps> = ({ onOpenPayment }) => {
   const { loans, payEmi, addLoan, currencySymbol } = useApp();
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -37,6 +41,14 @@ export const EmiManager: React.FC = () => {
     setPrincipal('');
     setEmi('');
     setShowAddModal(false);
+  };
+
+  const handlePayEmiClick = (loan: LoanItem) => {
+    if (onOpenPayment) {
+      onOpenPayment(loan.monthlyEmi, 'EMI Payment');
+    } else {
+      payEmi(loan.id);
+    }
   };
 
   return (
@@ -116,7 +128,7 @@ export const EmiManager: React.FC = () => {
               </div>
 
               <button 
-                onClick={() => payEmi(loan.id)}
+                onClick={() => handlePayEmiClick(loan)}
                 disabled={loan.remainingBalance === 0}
                 className="w-full py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-all disabled:opacity-40"
               >

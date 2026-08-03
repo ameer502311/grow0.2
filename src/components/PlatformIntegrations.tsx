@@ -5,8 +5,13 @@ import {
   Coins, Sparkles, Layers, Zap, ShoppingBag
 } from 'lucide-react';
 import { PaymentGatewayModal } from './PaymentGatewayModal';
+import { PaymentTransaction } from '../types';
 
-export const PlatformIntegrations: React.FC = () => {
+export interface PlatformIntegrationsProps {
+  onOpenPayment?: (amount?: number, purpose?: PaymentTransaction['purpose']) => void;
+}
+
+export const PlatformIntegrations: React.FC<PlatformIntegrationsProps> = ({ onOpenPayment }) => {
   const { 
     platforms, togglePlatformConnection, buyDigitalGold, tickers, currencySymbol, transactions 
   } = useApp();
@@ -22,7 +27,11 @@ export const PlatformIntegrations: React.FC = () => {
 
   const handleBuyGoldSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setShowPaymentModal(true);
+    if (onOpenPayment) {
+      onOpenPayment(parseFloat(goldAmount || '1000'), 'Digital Gold Buy');
+    } else {
+      setShowPaymentModal(true);
+    }
   };
 
   const handlePaymentSuccess = () => {

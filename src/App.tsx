@@ -1,7 +1,8 @@
 import React, { useState, Component, ErrorInfo, ReactNode } from 'react';
 import { useApp } from './context/AppContext';
 import { Header } from './components/Header';
-import { Sidebar, ActiveTab } from './components/Sidebar';
+import { Sidebar } from './components/Sidebar';
+import { ActiveTab, IncomeCategory, ExpenseCategory, PaymentTransaction } from './types';
 import { Dashboard } from './components/Dashboard';
 import { PersonalFinance } from './components/PersonalFinance';
 import { Investments } from './components/Investments';
@@ -71,7 +72,7 @@ export const App: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSmartFeaturesModal, setShowSmartFeaturesModal] = useState(false);
   const [showPaymentGatewayModal, setShowPaymentGatewayModal] = useState(false);
-  const [paymentModalProps, setPaymentModalProps] = useState<{ amount?: number; purpose?: any }>({});
+  const [paymentModalProps, setPaymentModalProps] = useState<{ amount?: number; purpose?: PaymentTransaction['purpose'] }>({});
 
   // Quick Add modal
   const [showQuickAddModal, setShowQuickAddModal] = useState<'income' | 'expense' | null>(null);
@@ -79,7 +80,7 @@ export const App: React.FC = () => {
   const [quickCategory, setQuickCategory] = useState('');
   const [quickNotes, setQuickNotes] = useState('');
 
-  const handleOpenPayment = (amount?: number, purpose?: any) => {
+  const handleOpenPayment = (amount?: number, purpose?: PaymentTransaction['purpose']) => {
     setPaymentModalProps({ amount, purpose });
     setShowPaymentGatewayModal(true);
   };
@@ -92,14 +93,14 @@ export const App: React.FC = () => {
     if (showQuickAddModal === 'income') {
       addIncome({
         amount: amt,
-        category: quickCategory,
+        category: quickCategory as IncomeCategory,
         notes: quickNotes || 'Quick Add Income',
         date: new Date().toISOString().slice(0, 10)
       });
     } else {
       addExpense({
         amount: amt,
-        category: quickCategory,
+        category: quickCategory as ExpenseCategory,
         notes: quickNotes || 'Quick Add Expense',
         date: new Date().toISOString().slice(0, 10)
       });
@@ -130,21 +131,21 @@ export const App: React.FC = () => {
             {activeTab === 'dashboard' && (
               <Dashboard 
                 setActiveTab={setActiveTab} 
-                onOpenAddModal={(type) => setShowQuickAddModal(type)}
+                onOpenAddModal={(type: 'income' | 'expense') => setShowQuickAddModal(type)}
                 onOpenSmartFeatures={() => setShowSmartFeaturesModal(true)}
               />
             )}
 
-            {activeTab === 'personal_finance' && (
-              <PersonalFinance onOpenAddModal={(type) => setShowQuickAddModal(type)} />
+            {(activeTab === 'personal_finance' || activeTab === 'finance') && (
+              <PersonalFinance onOpenAddModal={(type: 'income' | 'expense') => setShowQuickAddModal(type)} />
             )}
 
             {activeTab === 'investments' && (
-              <Investments onOpenBuyGold={(amt) => handleOpenPayment(amt, 'Digital Gold Buy')} />
+              <Investments onOpenBuyGold={(amt: number) => handleOpenPayment(amt, 'Digital Gold Buy')} />
             )}
 
-            {activeTab === 'platforms' && (
-              <PlatformIntegrations onOpenPayment={(amt, purp) => handleOpenPayment(amt, purp)} />
+            {(activeTab === 'platforms' || activeTab === 'integrations') && (
+              <PlatformIntegrations onOpenPayment={(amt?: number, purp?: PaymentTransaction['purpose']) => handleOpenPayment(amt, purp)} />
             )}
 
             {activeTab === 'calculators' && <Calculators />}
@@ -154,7 +155,7 @@ export const App: React.FC = () => {
             {activeTab === 'news' && <NewsFeed />}
 
             {activeTab === 'loans' && (
-              <EmiManager onOpenPayment={(amt, purp) => handleOpenPayment(amt, purp)} />
+              <EmiManager onOpenPayment={(amt?: number, purp?: PaymentTransaction['purpose']) => handleOpenPayment(amt, purp)} />
             )}
 
             {activeTab === 'reports' && <Reports />}

@@ -6,7 +6,11 @@ import {
 } from 'lucide-react';
 import { AssetCategory } from '../types';
 
-export const Investments: React.FC = () => {
+export interface InvestmentsProps {
+  onOpenBuyGold?: (amount: number) => void;
+}
+
+export const Investments: React.FC<InvestmentsProps> = ({ onOpenBuyGold }) => {
   const { 
     currencySymbol, investments, tickers, addInvestment 
   } = useApp();
@@ -204,6 +208,22 @@ export const Investments: React.FC = () => {
               <span className="text-rose-400 text-xs font-bold mt-1 block">-₹420 (-0.47%) Today</span>
             </div>
           </div>
+
+          {/* Buy Gold quick trigger card */}
+          {onOpenBuyGold && (
+            <div className="glass-panel rounded-3xl p-5 bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
+              <div>
+                <h3 className="font-extrabold text-sm text-white">Buy 24K Digital Gold Instant Savings</h3>
+                <p className="text-xs text-slate-400">Insured vault storage via SafeGold & Augmont starting at ₹10.</p>
+              </div>
+              <button 
+                onClick={() => onOpenBuyGold(1000)}
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-amber-500/20"
+              >
+                Buy Digital Gold Now
+              </button>
+            </div>
+          )}
 
           {/* Historical Price Chart Simulation */}
           <div className="glass-panel rounded-3xl p-6 bg-slate-900/60 border-slate-800 space-y-4">

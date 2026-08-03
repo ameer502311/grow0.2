@@ -4,18 +4,9 @@ import {
   Newspaper, CreditCard, PieChart, ShieldAlert, Globe, Zap
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { ActiveTab } from '../types';
 
-export type ActiveTab = 
-  | 'dashboard' 
-  | 'finance' 
-  | 'investments' 
-  | 'calculators' 
-  | 'ai' 
-  | 'news' 
-  | 'loans' 
-  | 'reports' 
-  | 'integrations'
-  | 'admin';
+export type { ActiveTab };
 
 interface SidebarProps {
   activeTab: ActiveTab;
@@ -25,11 +16,11 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
   const { user } = useApp();
 
-  const navItems = [
+  const navItems: { id: ActiveTab; label: string; icon: any; badge?: string }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'finance', label: 'Personal Finance', icon: Wallet },
+    { id: 'personal_finance', label: 'Personal Finance', icon: Wallet },
     { id: 'investments', label: 'Investments & Markets', icon: TrendingUp },
-    { id: 'integrations', label: 'Platforms & GPay/Paytm', icon: Globe, badge: 'GPay/Groww' },
+    { id: 'platforms', label: 'Platforms & GPay/Paytm', icon: Globe, badge: 'GPay/Groww' },
     { id: 'calculators', label: 'Calculators', icon: Calculator },
     { id: 'ai', label: 'AI Advisor & Health', icon: Sparkles, badge: 'AI 0-100' },
     { id: 'news', label: 'Financial News', icon: Newspaper },
@@ -49,11 +40,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
         </div>
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = activeTab === item.id;
+          const isActive = activeTab === item.id || (item.id === 'personal_finance' && activeTab === 'finance') || (item.id === 'platforms' && activeTab === 'integrations');
           return (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id as ActiveTab)}
+              onClick={() => setActiveTab(item.id)}
               className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
                 isActive
                   ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/10 text-emerald-400 border border-emerald-500/30 shadow-md shadow-emerald-500/5'

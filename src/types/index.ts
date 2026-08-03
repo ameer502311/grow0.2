@@ -2,6 +2,20 @@ export type UserRole = 'USER' | 'ADMIN';
 export type CurrencyCode = 'INR' | 'USD' | 'EUR' | 'GBP';
 export type AiModelProvider = 'GEMINI' | 'CHATGPT';
 
+export type ActiveTab = 
+  | 'dashboard' 
+  | 'finance' 
+  | 'personal_finance' 
+  | 'investments' 
+  | 'calculators' 
+  | 'ai' 
+  | 'news' 
+  | 'loans' 
+  | 'reports' 
+  | 'integrations' 
+  | 'platforms' 
+  | 'admin';
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -17,7 +31,7 @@ export interface UserProfile {
   preferredAiModel: AiModelProvider;
 }
 
-export type IncomeCategory = 'Salary' | 'Business' | 'Freelance' | 'Rental' | 'Bonus' | 'Other Income';
+export type IncomeCategory = 'Salary' | 'Business' | 'Freelance' | 'Rental' | 'Bonus' | 'Other Income' | 'Investment' | 'Other';
 
 export interface IncomeItem {
   id: string;
