@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   Plus, Search, Filter, Download, Trash2, Edit3, Target, 
-  PiggyBank, ArrowUpRight, ArrowDownRight, AlertTriangle, CheckCircle, Calendar, DollarSign
+  PiggyBank, ArrowUpRight, ArrowDownRight, AlertTriangle, CheckCircle, Calendar, DollarSign, Wallet, CreditCard, TrendingUp
 } from 'lucide-react';
 import { IncomeCategory, ExpenseCategory } from '../types';
 
@@ -30,6 +30,12 @@ export const PersonalFinance: React.FC<PersonalFinanceProps> = ({ onOpenAddModal
   // Deposit modal state
   const [depositGoalId, setDepositGoalId] = useState<string | null>(null);
   const [depositAmount, setDepositAmount] = useState('');
+
+  // Total Calculations
+  const totalIncomes = (incomes || []).reduce((sum, i) => sum + (i.amount || 0), 0);
+  const totalExpenses = (expenses || []).reduce((sum, e) => sum + (e.amount || 0), 0);
+  const netSavings = totalIncomes - totalExpenses;
+  const savingsRatePct = totalIncomes > 0 ? Math.round((netSavings / totalIncomes) * 100) : 0;
 
   // Filtered Expenses with safe property checks
   const filteredExpenses = (expenses || []).filter(e => {
@@ -86,9 +92,11 @@ export const PersonalFinance: React.FC<PersonalFinanceProps> = ({ onOpenAddModal
   return (
     <div className="space-y-6">
       {/* Header & Sub-Tabs */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-panel rounded-3xl p-5 bg-slate-900/60 border-slate-800">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-panel rounded-3xl p-5 bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950/30 border-slate-800">
         <div>
-          <h1 className="text-xl font-extrabold text-white">Personal Finance Center</h1>
+          <h1 className="text-xl font-extrabold text-white flex items-center gap-2">
+            <Wallet className="w-5 h-5 text-emerald-400" /> Personal Finance & Cash Flow Center
+          </h1>
           <p className="text-xs text-slate-400">Manage income streams, track category expenses, set budgets & savings milestones.</p>
         </div>
 
@@ -108,7 +116,55 @@ export const PersonalFinance: React.FC<PersonalFinanceProps> = ({ onOpenAddModal
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Top 3 Personal Financial Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="glass-panel rounded-3xl p-5 bg-slate-900/80 border-slate-800 flex items-center justify-between">
+          <div>
+            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Incomes (Monthly)</span>
+            <p className="text-xl font-extrabold text-emerald-400 mt-1">
+              +{currencySymbol}{totalIncomes.toLocaleString()}
+            </p>
+            <span className="text-[10px] text-emerald-400/80 font-semibold flex items-center gap-1 mt-0.5">
+              <ArrowUpRight className="w-3 h-3" /> {(incomes || []).length} active streams
+            </span>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+            <Wallet className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="glass-panel rounded-3xl p-5 bg-slate-900/80 border-slate-800 flex items-center justify-between">
+          <div>
+            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Expenses (Monthly)</span>
+            <p className="text-xl font-extrabold text-rose-400 mt-1">
+              -{currencySymbol}{totalExpenses.toLocaleString()}
+            </p>
+            <span className="text-[10px] text-rose-400/80 font-semibold flex items-center gap-1 mt-0.5">
+              <ArrowDownRight className="w-3 h-3" /> {(expenses || []).length} logged items
+            </span>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400">
+            <CreditCard className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="glass-panel rounded-3xl p-5 bg-slate-900/80 border-slate-800 flex items-center justify-between">
+          <div>
+            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Net Savings Margin</span>
+            <p className="text-xl font-extrabold text-amber-400 mt-1">
+              {currencySymbol}{netSavings.toLocaleString()}
+            </p>
+            <span className="text-[10px] text-amber-400/80 font-semibold flex items-center gap-1 mt-0.5">
+              <TrendingUp className="w-3 h-3" /> {savingsRatePct}% savings rate
+            </span>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <PiggyBank className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs Switcher */}
       <div className="flex items-center space-x-2 border-b border-slate-800 pb-2 overflow-x-auto">
         <button 
           onClick={() => setActiveTab('expenses')}
