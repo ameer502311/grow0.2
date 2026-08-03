@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Component, ErrorInfo, ReactNode } from 'react';
 import { useApp } from './context/AppContext';
 import { Header } from './components/Header';
 import { Sidebar, ActiveTab } from './components/Sidebar';
@@ -15,6 +15,53 @@ import { AdminPanel } from './components/AdminPanel';
 import { AuthModal } from './components/AuthModal';
 import { SmartFeaturesModal } from './components/SmartFeaturesModal';
 import { PaymentGatewayModal } from './components/PaymentGatewayModal';
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+class ViewErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  public state: ErrorBoundaryState = {
+    hasError: false
+  };
+
+  public static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("View ErrorBoundary caught an error:", error, errorInfo);
+  }
+
+  public render() {
+    if (this.state.hasError) {
+      return (
+        <div className="glass-panel rounded-3xl p-8 bg-slate-900/80 border-slate-800 text-center space-y-4 my-6">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto text-xl font-black">
+            ⚠️
+          </div>
+          <h2 className="text-lg font-bold text-white">View Recovered</h2>
+          <p className="text-xs text-slate-400 max-w-md mx-auto">
+            {this.state.error?.message || "An unexpected rendering error occurred. Please click below to refresh the active tab view."}
+          </p>
+          <button 
+            onClick={() => this.setState({ hasError: false })} 
+            className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-amber-500/20 transition-all"
+          >
+            Reload View
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 export const App: React.FC = () => {
   const { user, addIncome, addExpense } = useApp();
@@ -79,39 +126,41 @@ export const App: React.FC = () => {
 
         {/* Tab View Router */}
         <main className="flex-1 min-w-0">
-          {activeTab === 'dashboard' && (
-            <Dashboard 
-              setActiveTab={setActiveTab} 
-              onOpenAddModal={(type) => setShowQuickAddModal(type)}
-              onOpenSmartFeatures={() => setShowSmartFeaturesModal(true)}
-            />
-          )}
+          <ViewErrorBoundary key={activeTab}>
+            {activeTab === 'dashboard' && (
+              <Dashboard 
+                setActiveTab={setActiveTab} 
+                onOpenAddModal={(type) => setShowQuickAddModal(type)}
+                onOpenSmartFeatures={() => setShowSmartFeaturesModal(true)}
+              />
+            )}
 
-          {activeTab === 'personal_finance' && (
-            <PersonalFinance onOpenAddModal={(type) => setShowQuickAddModal(type)} />
-          )}
+            {activeTab === 'personal_finance' && (
+              <PersonalFinance onOpenAddModal={(type) => setShowQuickAddModal(type)} />
+            )}
 
-          {activeTab === 'investments' && (
-            <Investments onOpenBuyGold={(amt) => handleOpenPayment(amt, 'Digital Gold Buy')} />
-          )}
+            {activeTab === 'investments' && (
+              <Investments onOpenBuyGold={(amt) => handleOpenPayment(amt, 'Digital Gold Buy')} />
+            )}
 
-          {activeTab === 'platforms' && (
-            <PlatformIntegrations onOpenPayment={(amt, purp) => handleOpenPayment(amt, purp)} />
-          )}
+            {activeTab === 'platforms' && (
+              <PlatformIntegrations onOpenPayment={(amt, purp) => handleOpenPayment(amt, purp)} />
+            )}
 
-          {activeTab === 'calculators' && <Calculators />}
+            {activeTab === 'calculators' && <Calculators />}
 
-          {activeTab === 'ai' && <AiAdvisor />}
+            {activeTab === 'ai' && <AiAdvisor />}
 
-          {activeTab === 'news' && <NewsFeed />}
+            {activeTab === 'news' && <NewsFeed />}
 
-          {activeTab === 'loans' && (
-            <EmiManager onOpenPayment={(amt, purp) => handleOpenPayment(amt, purp)} />
-          )}
+            {activeTab === 'loans' && (
+              <EmiManager onOpenPayment={(amt, purp) => handleOpenPayment(amt, purp)} />
+            )}
 
-          {activeTab === 'reports' && <Reports />}
+            {activeTab === 'reports' && <Reports />}
 
-          {activeTab === 'admin' && <AdminPanel />}
+            {activeTab === 'admin' && <AdminPanel />}
+          </ViewErrorBoundary>
         </main>
       </div>
 

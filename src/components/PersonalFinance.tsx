@@ -12,7 +12,7 @@ interface PersonalFinanceProps {
 
 export const PersonalFinance: React.FC<PersonalFinanceProps> = ({ onOpenAddModal }) => {
   const { 
-    currencySymbol, incomes, expenses, budgets, savingsGoals, 
+    currencySymbol, incomes = [], expenses = [], budgets = [], savingsGoals = [], 
     deleteIncome, deleteExpense, updateBudget, addSavingsGoal, depositSavingsGoal 
   } = useApp();
 
@@ -31,11 +31,14 @@ export const PersonalFinance: React.FC<PersonalFinanceProps> = ({ onOpenAddModal
   const [depositGoalId, setDepositGoalId] = useState<string | null>(null);
   const [depositAmount, setDepositAmount] = useState('');
 
-  // Filtered Expenses
-  const filteredExpenses = expenses.filter(e => {
-    const matchesSearch = e.notes?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          e.category.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCat = selectedCategory === 'ALL' || e.category === selectedCategory;
+  // Filtered Expenses with safe property checks
+  const filteredExpenses = (expenses || []).filter(e => {
+    if (!e) return false;
+    const notes = e.notes || '';
+    const category = e.category || 'Other';
+    const matchesSearch = notes.toLowerCase().includes((searchQuery || '').toLowerCase()) || 
+                          category.toLowerCase().includes((searchQuery || '').toLowerCase());
+    const matchesCat = selectedCategory === 'ALL' || category === selectedCategory;
     return matchesSearch && matchesCat;
   });
 
@@ -43,8 +46,8 @@ export const PersonalFinance: React.FC<PersonalFinanceProps> = ({ onOpenAddModal
   const exportTransactionsCSV = () => {
     const headers = ['Type', 'Category', 'Amount', 'Date', 'Notes'];
     const rows = [
-      ...incomes.map(i => ['Income', i.category, i.amount, i.date, i.notes || '']),
-      ...expenses.map(e => ['Expense', e.category, e.amount, e.date, e.notes || ''])
+      ...(incomes || []).map(i => ['Income', i.category || 'Other', i.amount || 0, i.date || '', i.notes || '']),
+      ...(expenses || []).map(e => ['Expense', e.category || 'Other', e.amount || 0, e.date || '', e.notes || ''])
     ];
     
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
@@ -106,30 +109,30 @@ export const PersonalFinance: React.FC<PersonalFinanceProps> = ({ onOpenAddModal
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center space-x-2 border-b border-slate-800 pb-2">
+      <div className="flex items-center space-x-2 border-b border-slate-800 pb-2 overflow-x-auto">
         <button 
           onClick={() => setActiveTab('expenses')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'expenses' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200'}`}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${activeTab === 'expenses' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200'}`}
         >
-          Expense Tracking ({expenses.length})
+          Expense Tracking ({(expenses || []).length})
         </button>
         <button 
           onClick={() => setActiveTab('incomes')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'incomes' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200'}`}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${activeTab === 'incomes' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200'}`}
         >
-          Income Management ({incomes.length})
+          Income Management ({(incomes || []).length})
         </button>
         <button 
           onClick={() => setActiveTab('budgets')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'budgets' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200'}`}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${activeTab === 'budgets' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200'}`}
         >
-          Budget Planner ({budgets.length})
+          Budget Planner ({(budgets || []).length})
         </button>
         <button 
           onClick={() => setActiveTab('goals')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'goals' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200'}`}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${activeTab === 'goals' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200'}`}
         >
-          Savings Goals ({savingsGoals.length})
+          Savings Goals ({(savingsGoals || []).length})
         </button>
       </div>
 
@@ -191,12 +194,12 @@ export const PersonalFinance: React.FC<PersonalFinanceProps> = ({ onOpenAddModal
                     <tr key={exp.id} className="hover:bg-slate-900/40 transition-colors">
                       <td className="py-3 px-4 font-semibold text-slate-200 flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-rose-400" />
-                        {exp.category}
+                        {exp.category || 'Expense'}
                       </td>
                       <td className="py-3 px-4 text-slate-300">{exp.notes || '—'}</td>
-                      <td className="py-3 px-4 text-slate-400">{exp.date}</td>
+                      <td className="py-3 px-4 text-slate-400">{exp.date || ''}</td>
                       <td className="py-3 px-4 text-right font-bold text-rose-400">
-                        -{currencySymbol}{exp.amount.toLocaleString()}
+                        -{currencySymbol}{(exp.amount || 0).toLocaleString()}
                       </td>
                       <td className="py-3 px-4 text-center">
                         <button 
@@ -231,16 +234,16 @@ export const PersonalFinance: React.FC<PersonalFinanceProps> = ({ onOpenAddModal
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {incomes.map((inc) => (
+                {(incomes || []).map((inc) => (
                   <tr key={inc.id} className="hover:bg-slate-900/40 transition-colors">
                     <td className="py-3 px-4 font-semibold text-slate-200 flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                      {inc.category}
+                      {inc.category || 'Income'}
                     </td>
                     <td className="py-3 px-4 text-slate-300">{inc.notes || '—'}</td>
-                    <td className="py-3 px-4 text-slate-400">{inc.date}</td>
+                    <td className="py-3 px-4 text-slate-400">{inc.date || ''}</td>
                     <td className="py-3 px-4 text-right font-bold text-emerald-400">
-                      +{currencySymbol}{inc.amount.toLocaleString()}
+                      +{currencySymbol}{(inc.amount || 0).toLocaleString()}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <button 
@@ -261,17 +264,19 @@ export const PersonalFinance: React.FC<PersonalFinanceProps> = ({ onOpenAddModal
       {/* BUDGET PLANNER TAB */}
       {activeTab === 'budgets' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {budgets.map((b) => {
-            const usagePct = Math.min(100, Math.round((b.spentAmount / b.limitAmount) * 100));
-            const isExceeded = b.spentAmount > b.limitAmount;
+          {(budgets || []).map((b) => {
+            const limit = b.limitAmount || 1;
+            const spent = b.spentAmount || 0;
+            const usagePct = Math.min(100, Math.round((spent / limit) * 100));
+            const isExceeded = spent > limit;
             const isWarning = usagePct >= 80 && !isExceeded;
 
             return (
               <div key={b.id} className="glass-panel rounded-3xl p-5 bg-slate-900/60 border-slate-800 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-bold text-sm text-slate-100">{b.category}</h3>
-                    <p className="text-[11px] text-slate-400">{b.period} Target</p>
+                    <h3 className="font-bold text-sm text-slate-100">{b.category || 'Budget'}</h3>
+                    <p className="text-[11px] text-slate-400">{b.period || 'Monthly'} Target</p>
                   </div>
                   {isExceeded && (
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center gap-1">
@@ -286,8 +291,8 @@ export const PersonalFinance: React.FC<PersonalFinanceProps> = ({ onOpenAddModal
                 </div>
 
                 <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="text-slate-400">Spent: <span className="text-slate-200">{currencySymbol}{b.spentAmount.toLocaleString()}</span></span>
-                  <span className="text-slate-400">Limit: <span className="text-emerald-400">{currencySymbol}{b.limitAmount.toLocaleString()}</span></span>
+                  <span className="text-slate-400">Spent: <span className="text-slate-200">{currencySymbol}{spent.toLocaleString()}</span></span>
+                  <span className="text-slate-400">Limit: <span className="text-emerald-400">{currencySymbol}{limit.toLocaleString()}</span></span>
                 </div>
 
                 {/* Progress bar */}
@@ -316,28 +321,30 @@ export const PersonalFinance: React.FC<PersonalFinanceProps> = ({ onOpenAddModal
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {savingsGoals.map((g) => {
-              const progressPct = Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100));
-              const remaining = Math.max(0, g.targetAmount - g.currentAmount);
+            {(savingsGoals || []).map((g) => {
+              const target = g.targetAmount || 1;
+              const current = g.currentAmount || 0;
+              const progressPct = Math.min(100, Math.round((current / target) * 100));
+              const remaining = Math.max(0, target - current);
 
               return (
                 <div key={g.id} className="glass-panel glass-card-hover rounded-3xl p-5 bg-slate-900/60 border-slate-800 space-y-4 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                        {g.category}
+                        {g.category || 'Goal'}
                       </span>
                       <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                        <Calendar className="w-3 h-3" /> {g.targetDate}
+                        <Calendar className="w-3 h-3" /> {g.targetDate || ''}
                       </span>
                     </div>
 
-                    <h3 className="text-base font-extrabold text-white">{g.title}</h3>
+                    <h3 className="text-base font-extrabold text-white">{g.title || 'Goal'}</h3>
                     
                     <div className="mt-3 space-y-1 text-xs">
                       <div className="flex justify-between text-slate-400">
-                        <span>Saved: <strong className="text-emerald-400">{currencySymbol}{g.currentAmount.toLocaleString()}</strong></span>
-                        <span>Target: <strong className="text-slate-200">{currencySymbol}{g.targetAmount.toLocaleString()}</strong></span>
+                        <span>Saved: <strong className="text-emerald-400">{currencySymbol}{current.toLocaleString()}</strong></span>
+                        <span>Target: <strong className="text-slate-200">{currencySymbol}{target.toLocaleString()}</strong></span>
                       </div>
                       <p className="text-[11px] text-slate-400">Remaining: {currencySymbol}{remaining.toLocaleString()}</p>
                     </div>
