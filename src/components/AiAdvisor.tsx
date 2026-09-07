@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   Sparkles, Send, Mic, Volume2, ShieldCheck, Key, RefreshCw, 
-  TrendingUp, AlertCircle, ArrowUpRight, BarChart2, Bot, Cpu
+  TrendingUp, AlertCircle, ArrowUpRight, BarChart2, Bot, Cpu, CheckCircle2, AlertTriangle, Lightbulb, GraduationCap
 } from 'lucide-react';
 import { askGeminiAdvisor, askChatGptAdvisor } from '../services/api';
-import { AiModelProvider } from '../types';
+import { fetchRecommendations, runFinancialAnalysis } from '../services/financialApi';
+import { AiModelProvider, FinancialRecommendationItem } from '../types';
 
 export const AiAdvisor: React.FC = () => {
   const { user, setUser, healthScore, incomes, expenses, investments, currencySymbol } = useApp();
@@ -13,6 +14,23 @@ export const AiAdvisor: React.FC = () => {
   const [aiModel, setAiModel] = useState<AiModelProvider>(user.preferredAiModel || 'GEMINI');
   const [promptInput, setPromptInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [analyzingPipeline, setAnalyzingPipeline] = useState(false);
+  const [recommendations, setRecommendations] = useState<FinancialRecommendationItem[]>([]);
+  
+  useEffect(() => {
+    fetchRecommendations().then(recs => {
+      if (recs) setRecommendations(recs);
+    });
+  }, []);
+
+  const handleRunFullAnalysis = async () => {
+    setAnalyzingPipeline(true);
+    const data = await runFinancialAnalysis();
+    if (data && data.recommendations) {
+      setRecommendations(data.recommendations);
+    }
+    setAnalyzingPipeline(false);
+  };
   
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai'; text: string; model?: string }[]>([
     { 
@@ -161,6 +179,14 @@ export const AiAdvisor: React.FC = () => {
               <p className="text-[11px] text-slate-400">Calculated across 6 key wealth discipline metrics</p>
             </div>
           </div>
+          <button 
+            onClick={handleRunFullAnalysis}
+            disabled={analyzingPipeline}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${analyzingPipeline ? 'animate-spin' : ''}`} />
+            <span>{analyzingPipeline ? 'Analyzing...' : 'Re-run AI & Rule Engine'}</span>
+          </button>
         </div>
 
         {/* 6 Metrics Grid */}
@@ -190,6 +216,46 @@ export const AiAdvisor: React.FC = () => {
             <span className="font-extrabold text-emerald-400 text-sm mt-0.5 block">{healthScore.billPaymentHistory}%</span>
           </div>
         </div>
+
+        {/* Real-time Structured AI Recommendations List */}
+        {recommendations.length > 0 && (
+          <div className="pt-2 border-t border-slate-800 space-y-3">
+            <h3 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+              <Lightbulb className="w-4 h-4 text-amber-400" />
+              Automated AI & Rule-Based Personalized Insights
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {recommendations.slice(0, 4).map((rec, idx) => {
+                const isHigh = rec.priority === 'HIGH';
+                const isMedium = rec.priority === 'MEDIUM';
+                return (
+                  <div 
+                    key={idx} 
+                    className={`p-3.5 rounded-2xl border text-xs space-y-1 ${
+                      isHigh 
+                        ? 'bg-rose-950/20 border-rose-500/30 text-rose-200' 
+                        : isMedium 
+                        ? 'bg-amber-950/20 border-amber-500/30 text-amber-200' 
+                        : 'bg-emerald-950/20 border-emerald-500/30 text-emerald-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between font-bold">
+                      <span className="flex items-center gap-1">
+                        {isHigh ? <AlertTriangle className="w-3.5 h-3.5 text-rose-400" /> : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
+                        {rec.title}
+                      </span>
+                      <span className="text-[9px] uppercase px-1.5 py-0.5 rounded font-extrabold bg-slate-900 border border-slate-800">
+                        {rec.priority}
+                      </span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed text-slate-300">{rec.message}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* AI Budget & Cash Flow Predictor Grid */}

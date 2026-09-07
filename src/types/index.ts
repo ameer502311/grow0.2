@@ -184,3 +184,50 @@ export interface ConnectedPlatform {
   holdingsValue: number;
   logo: string;
 }
+
+export interface FinancialAnalyticsData {
+  totalIncome: number;
+  totalExpenses: number;
+  monthlySavings: number;
+  savingsRate: number;
+  expenseRatio: number;
+  totalMonthlyEmi: number;
+  debtRatio: number;
+  categoryBreakdown: Record<string, number>;
+  essentialExpenses: number;
+  emergencyFundMonths: number;
+  financialHealthScore: number;
+  healthCategory: 'Needs Attention' | 'Improving' | 'Good' | 'Very Good' | 'Excellent';
+  calculatedAt: string;
+}
+
+export interface FinancialRecommendationItem {
+  title: string;
+  message: string;
+  category: 'SAVINGS' | 'EXPENSE' | 'GOAL' | 'INVESTMENT_EDUCATION' | 'DEBT' | 'EMERGENCY_FUND' | 'FINANCIAL_HEALTH' | 'POSITIVE_HABIT';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  source: 'RULE_ENGINE' | 'AI' | 'HYBRID';
+}
+
+export interface NotificationItem {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  category: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  read: boolean;
+  createdAt: string;
+}
+
+export interface NotificationPreferenceData {
+  userId: string;
+  frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'IMPORTANT_ONLY';
+  savingsAlerts: boolean;
+  expenseAlerts: boolean;
+  goalAlerts: boolean;
+  healthAlerts: boolean;
+  educationAlerts: boolean;
+  positiveInsights: boolean;
+}
+

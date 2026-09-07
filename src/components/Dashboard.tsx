@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   TrendingUp, TrendingDown, Wallet, DollarSign, PiggyBank, 
   Sparkles, ArrowUpRight, ArrowDownRight, PlusCircle, Mic, ScanLine, Calculator, Target, ShieldCheck, QrCode
 } from 'lucide-react';
 import { ActiveTab } from './Sidebar';
+import { fetchFinancialAnalytics, fetchRecommendations } from '../services/financialApi';
+import { FinancialAnalyticsData, FinancialRecommendationItem } from '../types';
 
 interface DashboardProps {
   setActiveTab: (tab: ActiveTab) => void;
@@ -20,6 +22,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const { 
     currencySymbol, incomes, expenses, budgets, investments, tickers, healthScore 
   } = useApp();
+
+  const [realAnalytics, setRealAnalytics] = useState<FinancialAnalyticsData | null>(null);
+  const [recommendations, setRecommendations] = useState<FinancialRecommendationItem[]>([]);
+
+  useEffect(() => {
+    fetchFinancialAnalytics().then(data => {
+      if (data) setRealAnalytics(data);
+    });
+    fetchRecommendations().then(recs => {
+      if (recs && recs.length > 0) setRecommendations(recs);
+    });
+  }, []);
 
   const totalIncome = incomes.reduce((acc, curr) => acc + curr.amount, 0);
   const totalExpense = expenses.reduce((acc, curr) => acc + curr.amount, 0);
@@ -250,26 +264,37 @@ export const Dashboard: React.FC<DashboardProps> = ({
               Financial Health Score
             </span>
             <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-purple-500/20 text-purple-300 border border-purple-500/30">
-              {healthScore.rating}
+              {realAnalytics?.healthCategory || healthScore.rating}
             </span>
           </div>
 
           <div className="flex items-center justify-center space-x-4 my-2">
             <div className="relative w-24 h-24 flex items-center justify-center rounded-full bg-slate-950 border-4 border-emerald-500/80 shadow-xl shadow-emerald-500/20">
-              <span className="text-2xl font-black text-white">{healthScore.score}</span>
+              <span className="text-2xl font-black text-white">
+                {realAnalytics ? realAnalytics.financialHealthScore : healthScore.score}
+              </span>
               <span className="text-[9px] text-slate-400 absolute bottom-3">/ 100</span>
             </div>
 
             <div className="text-xs space-y-1 text-slate-300">
-              <p className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Savings: {healthScore.savingsRatio}%</p>
-              <p className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-cyan-400" /> Debt Ratio: {healthScore.debtRatio}%</p>
-              <p className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> Emergency: {healthScore.emergencyFundMonths} mo</p>
+              <p className="flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> 
+                Savings: {realAnalytics ? `${realAnalytics.savingsRate}%` : `${healthScore.savingsRatio}%`}
+              </p>
+              <p className="flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" /> 
+                Debt Ratio: {realAnalytics ? `${realAnalytics.debtRatio}%` : `${healthScore.debtRatio}%`}
+              </p>
+              <p className="flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> 
+                Emergency: {realAnalytics ? `${realAnalytics.emergencyFundMonths} mo` : `${healthScore.emergencyFundMonths} mo`}
+              </p>
             </div>
           </div>
 
           <div className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs">
             <p className="text-slate-300 leading-relaxed font-medium">
-              "{healthScore.recommendations[0] || 'Keep maintaining high savings rate and step up SIPs annually.'}"
+              "{recommendations[0]?.message || healthScore.recommendations[0] || 'Keep maintaining high savings rate and step up SIPs annually.'}"
             </p>
           </div>
 

@@ -3,6 +3,8 @@ import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import mongoose from 'mongoose';
+import { createFinancialRouter } from './routes/financial.js';
+import { startScheduler } from './services/scheduler.js';
 
 const app = express();
 app.use(cors({ origin: '*' }));
@@ -148,6 +150,15 @@ app.post('/api/ai/chatgpt', (req, res) => {
     reply: `🤖 ChatGPT 4o AI Evaluated: "${prompt}". Recommendation: Your cashflow trajectory is positive. Increase monthly SIP step-up by 10% annually.` 
   });
 });
+
+// Memory Store reference for financial services
+const memoryStore = { dbUser, dbIncomes, dbExpenses, dbInvestments, dbLoans, dbPayments };
+
+// Mount Financial Router
+app.use('/api/financial', createFinancialRouter(memoryStore, io));
+
+// Start Automated Smart Scheduler
+startScheduler(memoryStore, io);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
