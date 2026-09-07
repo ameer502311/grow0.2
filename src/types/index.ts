@@ -14,6 +14,7 @@ export type ActiveTab =
   | 'reports' 
   | 'integrations' 
   | 'platforms' 
+  | 'smart_bills'
   | 'admin';
 
 export interface UserProfile {
@@ -230,4 +231,108 @@ export interface NotificationPreferenceData {
   educationAlerts: boolean;
   positiveInsights: boolean;
 }
+
+export interface BillerCategory {
+  id: string;
+  name: string;
+  icon: string;
+  supported: boolean;
+  description: string;
+}
+
+export interface BillerItem {
+  id: string;
+  name: string;
+  code: string;
+}
+
+export interface BillerField {
+  name: string;
+  label: string;
+  type: 'text' | 'number' | 'dropdown';
+  required: boolean;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
+  hint?: string;
+}
+
+export interface BillerMetadata {
+  billerId: string;
+  billerName: string;
+  fetchOption: string;
+  fields: BillerField[];
+}
+
+export interface BillRequestData {
+  billRequestId: string;
+  billerId: string;
+  customerName: string;
+  customerIdentifier: string;
+  billAmount: number;
+  convenienceFee: number;
+  totalAmount: number;
+  dueDate: string;
+  billNumber: string;
+  billPeriod: string;
+  fetchStatus: string;
+  isMock?: boolean;
+}
+
+export interface RechargePlan {
+  id: string;
+  name: string;
+  amount: number;
+  validity: string;
+  data: string;
+  calling: string;
+  sms: string;
+}
+
+export interface BillTransactionRecord {
+  id: string;
+  userId: string;
+  paymentOrderId: string;
+  internalOrderId: string;
+  category: string;
+  billerId: string;
+  billerName: string;
+  customerIdentifier: string;
+  maskedCustomerIdentifier: string;
+  billRequestId?: string;
+  billPaymentId?: string;
+  provider: string;
+  providerReference?: string;
+  providerPaymentId?: string;
+  amount: number;
+  convenienceFee: number;
+  totalAmount: number;
+  currency: string;
+  paymentMethod: string;
+  paymentStatus: 'CREATED' | 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'CANCELLED';
+  billStatus: 'NOT_STARTED' | 'PROCESSING' | 'PENDING' | 'SUCCESS' | 'FAILED' | 'UNKNOWN';
+  idempotencyKey: string;
+  transactionDate: string;
+}
+
+export interface BillReceiptData {
+  appName: string;
+  receiptTitle: string;
+  internalOrderId: string;
+  category: string;
+  billerName: string;
+  maskedCustomerIdentifier: string;
+  amount: number;
+  convenienceFee: number;
+  totalAmount: number;
+  currency: string;
+  paymentStatus: string;
+  billStatus: string;
+  providerReference: string;
+  providerPaymentId: string;
+  transactionDate: string;
+  customerName: string;
+  disclaimer: string;
+}
+
 

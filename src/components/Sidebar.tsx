@@ -19,6 +19,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
   const navItems: { id: ActiveTab; label: string; icon: any; badge?: string }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'personal_finance', label: 'Personal Finance', icon: Wallet },
+    { id: 'smart_bills', label: 'Bills & Recharge', icon: Zap, badge: 'BBPS / GPay' },
     { id: 'investments', label: 'Investments & Markets', icon: TrendingUp },
     { id: 'platforms', label: 'Platforms & GPay/Paytm', icon: Globe, badge: 'GPay/Groww' },
     { id: 'calculators', label: 'Calculators', icon: Calculator },

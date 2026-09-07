@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   TrendingUp, TrendingDown, Wallet, DollarSign, PiggyBank, 
-  Sparkles, ArrowUpRight, ArrowDownRight, PlusCircle, Mic, ScanLine, Calculator, Target, ShieldCheck, QrCode
+  Sparkles, ArrowUpRight, ArrowDownRight, PlusCircle, Mic, ScanLine, Calculator, Target, ShieldCheck, QrCode, Zap
 } from 'lucide-react';
 import { ActiveTab } from './Sidebar';
 import { fetchFinancialAnalytics, fetchRecommendations } from '../services/financialApi';
@@ -91,6 +91,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
           >
             <Mic className="w-4 h-4" />
             <span>Voice & OCR</span>
+          </button>
+          <button 
+            onClick={() => setActiveTab('smart_bills')}
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/30 text-xs font-semibold transition-all cursor-pointer"
+          >
+            <Zap className="w-4 h-4 text-amber-300" />
+            <span>Pay Bills & Recharge</span>
           </button>
           <button 
             onClick={() => setActiveTab('calculators')}

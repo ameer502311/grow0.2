@@ -4,11 +4,17 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import { createFinancialRouter } from './routes/financial.js';
+import { createBillRouter } from './routes/billRoutes.js';
+import { createWebhookRouter } from './routes/webhookRoutes.js';
 import { startScheduler } from './services/scheduler.js';
 
 const app = express();
 app.use(cors({ origin: '*' }));
-app.use(express.json());
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf.toString();
+  }
+}));
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -156,6 +162,14 @@ const memoryStore = { dbUser, dbIncomes, dbExpenses, dbInvestments, dbLoans, dbP
 
 // Mount Financial Router
 app.use('/api/financial', createFinancialRouter(memoryStore, io));
+
+// Mount Smart Bill & Payments Router
+const billRouter = createBillRouter(memoryStore, io);
+app.use('/api/bills', billRouter);
+app.use('/api/payments', billRouter);
+
+// Mount Razorpay Webhooks Router
+app.use('/api/webhooks', createWebhookRouter(memoryStore, io));
 
 // Start Automated Smart Scheduler
 startScheduler(memoryStore, io);

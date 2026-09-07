@@ -13,6 +13,7 @@ import { EmiManager } from './components/EmiManager';
 import { Reports } from './components/Reports';
 import { PlatformIntegrations } from './components/PlatformIntegrations';
 import { AdminPanel } from './components/AdminPanel';
+import { SmartBillCenter } from './components/SmartBillCenter';
 import { AuthModal } from './components/AuthModal';
 import { SmartFeaturesModal } from './components/SmartFeaturesModal';
 import { PaymentGatewayModal } from './components/PaymentGatewayModal';
@@ -139,6 +140,8 @@ export const App: React.FC = () => {
             {(activeTab === 'personal_finance' || activeTab === 'finance') && (
               <PersonalFinance onOpenAddModal={(type: 'income' | 'expense') => setShowQuickAddModal(type)} />
             )}
+
+            {activeTab === 'smart_bills' && <SmartBillCenter />}
 
             {activeTab === 'investments' && (
               <Investments onOpenBuyGold={(amt: number) => handleOpenPayment(amt, 'Digital Gold Buy')} />
