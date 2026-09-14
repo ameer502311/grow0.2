@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   LayoutDashboard, Wallet, TrendingUp, Calculator, Sparkles, 
-  Newspaper, CreditCard, PieChart, ShieldAlert, Globe, Zap
+  Newspaper, CreditCard, PieChart, ShieldAlert, Globe, Zap, Bot
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ActiveTab } from '../types';
@@ -23,8 +23,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     { id: 'investments', label: 'Investments & Markets', icon: TrendingUp },
     { id: 'platforms', label: 'Platforms & GPay/Paytm', icon: Globe, badge: 'GPay/Groww' },
     { id: 'calculators', label: 'Calculators', icon: Calculator },
-    { id: 'ai', label: 'AI Advisor & Health', icon: Sparkles, badge: 'AI 0-100' },
-    { id: 'news', label: 'Financial News', icon: Newspaper },
+    { id: 'ai', label: 'AI Advisor & Health', icon: Sparkles, badge: 'AI & Codex Agents' },
+    { id: 'daily_command_center', label: 'Daily Command Center', icon: Zap, badge: 'Daily Hub' },
+    { id: 'market_news', label: 'Market News', icon: Newspaper },
     { id: 'loans', label: 'Loans & EMI', icon: CreditCard },
     { id: 'reports', label: 'Reports & Analytics', icon: PieChart },
   ];

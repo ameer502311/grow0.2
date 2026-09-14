@@ -7,6 +7,7 @@ import {
 import { ActiveTab } from './Sidebar';
 import { fetchFinancialAnalytics, fetchRecommendations } from '../services/financialApi';
 import { FinancialAnalyticsData, FinancialRecommendationItem } from '../types';
+import { MarketSearch } from './MarketSearch';
 
 interface DashboardProps {
   setActiveTab: (tab: ActiveTab) => void;
@@ -176,41 +177,81 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      {/* Live Market Sparkline Ticker Bar */}
-      <div className="glass-panel rounded-2xl p-4 bg-slate-900/80 border-slate-800 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-300 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-            Live Market Feed (Gold, Stocks, Crypto, Forex)
-          </span>
-          <button 
-            onClick={() => setActiveTab('investments')}
-            className="text-[11px] font-medium text-emerald-400 hover:underline"
-          >
-            View All Markets →
-          </button>
+      {/* Live Market Sparkline Ticker Bar (Automatic Live Display - Top Place) */}
+      <div className="glass-panel rounded-2xl p-4 bg-slate-900/80 border-slate-800 space-y-3 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+            <div>
+              <span className="text-xs font-extrabold text-slate-200">Live Market Feed (Gold, Stocks, Crypto, Forex)</span>
+              <span className="text-[10px] text-slate-400 block">Prices update automatically when official provider data is available (Auto 60s Refresh active)</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 text-[10px]">
+            <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold">
+              Updated automatically every 60s
+            </span>
+            <button 
+              onClick={() => setActiveTab('investments')}
+              className="font-bold text-amber-400 hover:underline"
+            >
+              View All Markets →
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {tickers.slice(0, 4).map((ticker) => {
-            const isPositive = ticker.change24h >= 0;
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {tickers.slice(0, 4).map((ticker: any) => {
+            const isPositive = (ticker.change || ticker.change24h || 0) >= 0;
+            const changeVal = ticker.change !== undefined ? ticker.change : ticker.change24h;
+            const changePercentVal = ticker.change_percentage !== undefined ? ticker.change_percentage : ticker.changePercent24h;
+            const dataStatus = ticker.data_status || 'live';
+            const sourceName = ticker.source || 'Verified Market Data Provider';
+            const lastUpdated = ticker.fetched_timestamp ? new Date(ticker.fetched_timestamp).toLocaleTimeString() : 'Just now';
+
             return (
-              <div key={ticker.symbol} className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] font-semibold text-slate-400">{ticker.name}</p>
-                  <p className="text-sm font-extrabold text-slate-100 mt-0.5">
-                    {ticker.category === 'Forex' ? '₹' : currencySymbol}{ticker.price.toLocaleString()}
-                  </p>
+              <div key={ticker.symbol} className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 space-y-2 flex flex-col justify-between">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="text-[10px] text-amber-400 font-extrabold uppercase block">{ticker.category || 'Commodity'}</span>
+                    <h4 className="text-xs font-extrabold text-slate-100">{ticker.name}</h4>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase border ${
+                    dataStatus === 'live' 
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
+                      : dataStatus === 'market_closed'
+                      ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                      : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                  }`}>
+                    {dataStatus}
+                  </span>
                 </div>
-                <div className={`text-right text-[11px] font-bold ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  <span>{isPositive ? '+' : ''}{ticker.changePercent24h}%</span>
-                  <span className="block text-[9px] font-normal text-slate-500">{ticker.category}</span>
+
+                <div>
+                  <div className="flex items-baseline justify-between">
+                    <p className="text-lg font-black text-white font-mono">
+                      {ticker.category === 'Crypto' ? '$' : currencySymbol}{(ticker.price || 0).toLocaleString()}
+                    </p>
+                    <div className={`text-right text-xs font-black ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      <span>{isPositive ? '+' : ''}{changePercentVal}%</span>
+                      <span className="block text-[10px] font-normal font-mono">({isPositive ? '+' : ''}{changeVal})</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-2 pt-2 border-t border-slate-900/80 flex items-center justify-between text-[9px] text-slate-400 font-mono">
+                    <span className="truncate max-w-[110px]" title={sourceName}>{sourceName}</span>
+                    <span>{lastUpdated}</span>
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Google-Style Market Search Section (Manual Search - Bottom Place) */}
+      <MarketSearch />
 
       {/* Portfolio Breakdown & AI Advisor Highlight Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

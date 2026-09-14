@@ -152,7 +152,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const fetchLiveTickers = async () => {
     try {
-      const res = await fetch('/api/markets/live-prices');
+      const res = await fetch('/api/markets');
       if (res.ok) {
         const json = await res.json();
         if (json.data && Array.isArray(json.data)) {
@@ -177,6 +177,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         fetchBackendPlatforms().then(data => { if (data) setPlatforms(data); });
       }
     });
+
+    // 60-Second Automated REST Polling Fallback
+    const pollInterval = setInterval(() => {
+      fetchLiveTickers();
+    }, 60 * 1000);
+
+    return () => clearInterval(pollInterval);
   }, []);
 
   const toggleTheme = () => {

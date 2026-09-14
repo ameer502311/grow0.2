@@ -1,6 +1,6 @@
 export type UserRole = 'USER' | 'ADMIN';
 export type CurrencyCode = 'INR' | 'USD' | 'EUR' | 'GBP';
-export type AiModelProvider = 'GEMINI' | 'CHATGPT';
+export type AiModelProvider = 'GEMINI' | 'CHATGPT' | 'OPENAI_AGENTS';
 
 export type ActiveTab = 
   | 'dashboard' 
@@ -10,6 +10,8 @@ export type ActiveTab =
   | 'calculators' 
   | 'ai' 
   | 'news' 
+  | 'daily_command_center'
+  | 'market_news'
   | 'loans' 
   | 'reports' 
   | 'integrations' 

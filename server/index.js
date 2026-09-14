@@ -6,7 +6,15 @@ import mongoose from 'mongoose';
 import { createFinancialRouter } from './routes/financial.js';
 import { createBillRouter } from './routes/billRoutes.js';
 import { createWebhookRouter } from './routes/webhookRoutes.js';
+import { createPortfolioRouter } from './routes/portfolioRoutes.js';
+import { createAgentsRouter } from './routes/agentsRoutes.js';
+import { createChatRouter } from './routes/chatRoutes.js';
+import { createIntegrationRouter } from './routes/integrationRoutes.js';
+import { createMarketRouter } from './routes/marketRoutes.js';
+import { createSearchRouter } from './routes/searchRoutes.js';
+import { createDailyMoneyRouter } from './routes/dailyMoneyRoutes.js';
 import { startScheduler } from './services/scheduler.js';
+import { startMarketScheduler } from './services/market_data/marketScheduler.js';
 
 const app = express();
 app.use(cors({ origin: '*' }));
@@ -171,8 +179,30 @@ app.use('/api/payments', billRouter);
 // Mount Razorpay Webhooks Router
 app.use('/api/webhooks', createWebhookRouter(memoryStore, io));
 
-// Start Automated Smart Scheduler
+// Mount Portfolio Router
+app.use('/api/portfolio', createPortfolioRouter(memoryStore, io));
+
+// Mount OpenAI Agents API Router
+app.use('/api/ai/agents', createAgentsRouter(memoryStore, io));
+
+// Mount Real-Time Streaming Chat & Market Prices Router
+app.use('/api', createChatRouter(memoryStore));
+
+// Mount Multi-Platform Integrations & Portfolio Aggregation Router
+app.use('/api', createIntegrationRouter(io));
+
+// Mount Automated Live Market Data Router
+app.use('/api', createMarketRouter(io));
+
+// Mount Google-like Market Search & Intent Engine Router
+app.use('/api', createSearchRouter());
+
+// Mount Daily Money Command Center Router
+app.use('/api', createDailyMoneyRouter(memoryStore, io));
+
+// Start Automated Smart Financial Scheduler & Live Market Scheduler
 startScheduler(memoryStore, io);
+startMarketScheduler(io);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

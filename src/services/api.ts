@@ -15,6 +15,276 @@ export async function checkBackendHealth(): Promise<{ status: string; connected:
   return { status: 'OFFLINE_FALLBACK', connected: false };
 }
 
+export interface StreamChatOptions {
+  message: string;
+  conversationId?: string;
+  messages?: { role: 'user' | 'assistant' | 'system'; content: string }[];
+  apiKey?: string;
+  onChunk: (delta: string) => void;
+  onToolCall?: (toolName: string, args: any) => void;
+  onDone?: (conversationId: string, fullText: string) => void;
+  onError?: (err: Error) => void;
+  signal?: AbortSignal;
+}
+
+export async function streamOpenAiChat({
+  message,
+  conversationId,
+  messages = [],
+  apiKey,
+  onChunk,
+  onToolCall,
+  onDone,
+  onError,
+  signal
+}: StreamChatOptions): Promise<string> {
+  let fullText = '';
+
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message,
+        conversation_id: conversationId,
+        messages,
+        apiKey
+      }),
+      signal
+    });
+
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({}));
+      throw new Error(errJson.error || `HTTP ${response.status}: Failed to connect to chat API.`);
+    }
+
+    if (!response.body) {
+      throw new Error('Response body is null. Streaming not supported.');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      let currentEvent = 'message';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        if (trimmed.startsWith('event:')) {
+          currentEvent = trimmed.slice(6).trim();
+          continue;
+        }
+
+        if (trimmed.startsWith('data:')) {
+          const dataStr = trimmed.slice(5).trim();
+          try {
+            const data = JSON.parse(dataStr);
+
+            if (currentEvent === 'token' && data.delta) {
+              fullText += data.delta;
+              onChunk(data.delta);
+            } else if (currentEvent === 'tool_call' && onToolCall) {
+              onToolCall(data.name, data.args);
+            } else if (currentEvent === 'done' && onDone) {
+              onDone(data.conversation_id || conversationId || '', fullText);
+            } else if (currentEvent === 'warning') {
+              console.warn('API Warning:', data.message);
+            }
+          } catch (e) {
+            console.error('Failed to parse SSE data line:', line, e);
+          }
+        }
+      }
+    }
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      console.log('Stream aborted by user');
+    } else {
+      console.error('Chat stream error:', err);
+      if (onError) onError(err);
+    }
+  }
+
+  return fullText;
+}
+
+export async function fetchMarketPrices() {
+  try {
+    const res = await fetch('/api/markets');
+    if (res.ok) {
+      const json = await res.json();
+      return json.data;
+    }
+  } catch (e) {
+    console.warn('Failed to fetch market prices from /api/markets');
+  }
+  return null;
+}
+
+export async function fetchLiveMarketsApi() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/markets`);
+    if (res.ok) {
+      const json = await res.json();
+      return json.data;
+    }
+  } catch (e) {
+    console.warn('Failed to fetch live markets');
+  }
+  return [];
+}
+
+export async function refreshMarketsApi() {
+  const res = await fetch(`${BACKEND_URL}/markets/refresh`, { method: 'POST' });
+  return await res.json();
+}
+
+export async function fetchMarketNewsApi() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/markets/news`);
+    if (res.ok) {
+      const json = await res.json();
+      return json.data;
+    }
+  } catch (e) {}
+  return [];
+}
+
+export async function fetchPriceAlertsApi() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/markets/alerts`);
+    if (res.ok) {
+      const json = await res.json();
+      return json;
+    }
+  } catch (e) {}
+  return { alerts: [], history: [] };
+}
+
+export async function createPriceAlertApi(alertData: any) {
+  const res = await fetch(`${BACKEND_URL}/markets/alerts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(alertData)
+  });
+  return await res.json();
+}
+
+export async function deletePriceAlertApi(alertId: string) {
+  const res = await fetch(`${BACKEND_URL}/markets/alerts/${alertId}`, { method: 'DELETE' });
+  return await res.json();
+}
+
+export async function performMarketSearchApi(query: string) {
+  const res = await fetch(`${BACKEND_URL}/market-search?q=${encodeURIComponent(query)}`);
+  return await res.json();
+}
+
+export async function fetchSearchHistoryApi() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/search-history`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {}
+  return { success: true, data: [] };
+}
+
+export async function clearSearchHistoryApi() {
+  const res = await fetch(`${BACKEND_URL}/search-history`, { method: 'DELETE' });
+  return await res.json();
+}
+
+// Multi-Platform Investment Aggregation API
+export async function fetchPlatformIntegrations() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/integrations`);
+    if (res.ok) {
+      const json = await res.json();
+      return json.data;
+    }
+  } catch (e) {
+    console.warn('Failed to fetch platform integrations');
+  }
+  return [];
+}
+
+export async function configurePlatformApi(platformId: string, credentials: any = {}) {
+  const res = await fetch(`${BACKEND_URL}/integrations/${platformId}/config`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(credentials)
+  });
+  return await res.json();
+}
+
+export async function connectPlatformApi(platformId: string, payload: any = {}) {
+  const res = await fetch(`${BACKEND_URL}/integrations/${platformId}/connect`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return await res.json();
+}
+
+export async function disconnectPlatformApi(platformId: string) {
+  const res = await fetch(`${BACKEND_URL}/integrations/${platformId}/disconnect`, {
+    method: 'POST'
+  });
+  return await res.json();
+}
+
+export async function testPlatformApi(platformId: string) {
+  const res = await fetch(`${BACKEND_URL}/integrations/${platformId}/test`, {
+    method: 'POST'
+  });
+  return await res.json();
+}
+
+export async function deletePlatformCredentialsApi(platformId: string) {
+  const res = await fetch(`${BACKEND_URL}/integrations/${platformId}/credentials`, {
+    method: 'DELETE'
+  });
+  return await res.json();
+}
+
+export async function syncAllPlatformsApi() {
+  const res = await fetch(`${BACKEND_URL}/sync/all`, {
+    method: 'POST'
+  });
+  return await res.json();
+}
+
+export async function syncSinglePlatformApi(platformId: string) {
+  const res = await fetch(`${BACKEND_URL}/sync/${platformId}`, {
+    method: 'POST'
+  });
+  return await res.json();
+}
+
+export async function fetchPortfolioSummaryApi() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/portfolio/summary`);
+    if (res.ok) {
+      const json = await res.json();
+      return json.data;
+    }
+  } catch (e) {
+    console.warn('Failed to fetch portfolio summary');
+  }
+  return null;
+}
+
 // Live Gold & Silver Price Fetcher (Google / Public Financial Rates API)
 export async function fetchLiveGoldSilverPrices(): Promise<{ gold24k: number; gold22k: number; silver: number } | null> {
   try {

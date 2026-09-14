@@ -9,6 +9,7 @@ import { Investments } from './components/Investments';
 import { Calculators } from './components/Calculators';
 import { AiAdvisor } from './components/AiAdvisor';
 import { NewsFeed } from './components/NewsFeed';
+import { DailyMoneyCommandCenter } from './components/DailyMoneyCommandCenter';
 import { EmiManager } from './components/EmiManager';
 import { Reports } from './components/Reports';
 import { PlatformIntegrations } from './components/PlatformIntegrations';
@@ -155,7 +156,9 @@ export const App: React.FC = () => {
 
             {activeTab === 'ai' && <AiAdvisor />}
 
-            {activeTab === 'news' && <NewsFeed />}
+            {(activeTab === 'news' || activeTab === 'daily_command_center') && <DailyMoneyCommandCenter />}
+
+            {activeTab === 'market_news' && <NewsFeed />}
 
             {activeTab === 'loans' && (
               <EmiManager onOpenPayment={(amt?: number, purp?: PaymentTransaction['purpose']) => handleOpenPayment(amt, purp)} />
