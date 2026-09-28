@@ -111,7 +111,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* Financial Summary Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
         {/* Net Worth Card */}
         <div className="glass-panel glass-card-hover rounded-2xl p-4 bg-slate-900/60 border-slate-800 relative overflow-hidden">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">

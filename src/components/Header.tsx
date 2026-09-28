@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
-  Bell, Sun, Moon, ShieldCheck, UserCheck, Search, DollarSign, Sparkles, ChevronDown, CheckCircle2, X, Server, QrCode, Smartphone
+  Bell, Sun, Moon, ShieldCheck, UserCheck, Search, DollarSign, Sparkles, ChevronDown, CheckCircle2, X, Server, QrCode, Smartphone, Menu
 } from 'lucide-react';
 import { CurrencyCode } from '../types';
 import { checkBackendHealth } from '../services/api';
@@ -10,9 +10,16 @@ import { UpiScannerAndTransferModal } from './UpiScannerAndTransferModal';
 interface HeaderProps {
   onOpenAuth: () => void;
   onOpenSmartFeatures: () => void;
+  onToggleMobileMenu?: () => void;
+  isMobileMenuOpen?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenAuth, onOpenSmartFeatures }) => {
+export const Header: React.FC<HeaderProps> = ({ 
+  onOpenAuth, 
+  onOpenSmartFeatures,
+  onToggleMobileMenu,
+  isMobileMenuOpen = false
+}) => {
   const { user, setUser, theme, toggleTheme, currency, setCurrency, currencySymbol, notifications, dismissNotification, investments, incomes, expenses } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -69,14 +76,15 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAuth, onOpenSmartFeatures 
       </div>
 
       {/* Header Actions */}
-      <div className="flex items-center space-x-2 sm:space-x-3">
+      <div className="flex items-center space-x-1.5 sm:space-x-2.5">
         {/* UPI QR & Mobile Pay Launcher */}
         <button 
           onClick={() => setShowUpiScannerModal(true)}
-          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90 text-slate-950 text-xs font-black transition-all shadow-md shadow-emerald-500/10 cursor-pointer"
+          className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90 text-slate-950 text-xs font-black transition-all shadow-md shadow-emerald-500/10 cursor-pointer"
+          title="Scan QR & Mobile Pay"
         >
-          <QrCode className="w-4 h-4" />
-          <span className="hidden sm:inline">Scan QR & Mobile Pay</span>
+          <QrCode className="w-4 h-4 shrink-0" />
+          <span className="hidden md:inline">Scan QR & Mobile Pay</span>
         </button>
 
         {/* Currency Switcher */}
@@ -84,28 +92,29 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAuth, onOpenSmartFeatures 
           <select 
             value={currency} 
             onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
-            className="bg-slate-900 border border-slate-800 text-xs text-slate-200 font-semibold rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer"
+            className="bg-slate-900 border border-slate-800 text-xs text-slate-200 font-semibold rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer"
           >
-            <option value="INR">INR (₹)</option>
-            <option value="USD">USD ($)</option>
-            <option value="EUR">EUR (€)</option>
-            <option value="GBP">GBP (£)</option>
+            <option value="INR">₹ INR</option>
+            <option value="USD">$ USD</option>
+            <option value="EUR">€ EUR</option>
+            <option value="GBP">£ GBP</option>
           </select>
         </div>
 
         {/* Smart AI Quick Launcher */}
         <button 
           onClick={onOpenSmartFeatures}
-          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-medium transition-all"
+          className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-medium transition-all"
+          title="Voice & Scan Receipt"
         >
-          <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-          <span className="hidden sm:inline">Voice & Scan</span>
+          <Sparkles className="w-3.5 h-3.5 animate-pulse shrink-0" />
+          <span className="hidden lg:inline">Voice & Scan</span>
         </button>
 
         {/* Dark/Light Mode Toggle */}
         <button 
           onClick={toggleTheme} 
-          className="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-colors"
+          className="p-1.5 sm:p-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-colors"
           title="Toggle Dark/Light Mode"
         >
           {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
@@ -193,6 +202,18 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAuth, onOpenSmartFeatures 
             </div>
           )}
         </div>
+
+        {/* Mobile Navigation Drawer Button */}
+        {onToggleMobileMenu && (
+          <button 
+            onClick={onToggleMobileMenu}
+            className="lg:hidden p-1.5 sm:p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-colors cursor-pointer"
+            title="Toggle Menu"
+            aria-label="Toggle navigation menu"
+          >
+            {isMobileMenuOpen ? <X className="w-4 h-4 text-emerald-400" /> : <Menu className="w-4 h-4 text-slate-300" />}
+          </button>
+        )}
       </div>
 
       {/* Standalone UPI Scanner & Mobile Transfer Modal */}

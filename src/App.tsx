@@ -69,6 +69,7 @@ class ViewErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
 export const App: React.FC = () => {
   const { user, addIncome, addExpense } = useApp();
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Modals state
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -120,12 +121,19 @@ export const App: React.FC = () => {
       <Header 
         onOpenAuth={() => setShowAuthModal(true)} 
         onOpenSmartFeatures={() => setShowSmartFeaturesModal(true)}
+        onToggleMobileMenu={() => setMobileMenuOpen(prev => !prev)}
+        isMobileMenuOpen={mobileMenuOpen}
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 gap-6">
+      <div className="flex-1 flex flex-col lg:flex-row max-w-[1600px] w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 gap-4 lg:gap-6 pb-24 lg:pb-8">
         {/* Sidebar Navigation */}
-        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        <Sidebar 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          mobileOpen={mobileMenuOpen}
+          setMobileOpen={setMobileMenuOpen}
+        />
 
         {/* Tab View Router */}
         <main className="flex-1 min-w-0">

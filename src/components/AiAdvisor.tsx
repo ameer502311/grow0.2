@@ -277,7 +277,7 @@ export const AiAdvisor: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 text-xs">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs">
           <div className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 space-x-1">
             <span className="text-slate-400">24K Gold:</span>
             <span className="font-bold text-amber-400">{marketPrices?.gold?.["24k"] ? `₹${marketPrices.gold["24k"].toLocaleString()}/10g` : 'Price unavailable'}</span>
@@ -304,7 +304,7 @@ export const AiAdvisor: React.FC = () => {
       </div>
 
       {/* Main Chat Container */}
-      <div className="glass-panel rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl flex flex-col h-[640px] overflow-hidden">
+      <div className="glass-panel rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl flex flex-col h-[70vh] min-h-[480px] max-h-[750px] overflow-hidden">
         {/* Chat Header Controls */}
         <div className="p-4 border-b border-slate-800/80 bg-slate-950/60 flex items-center justify-between">
           <div className="flex items-center space-x-3">
