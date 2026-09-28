@@ -44,17 +44,17 @@ class ViewErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="glass-panel rounded-3xl p-8 bg-slate-900/80 border-slate-800 text-center space-y-4 my-6">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto text-xl font-black">
+        <div className="glass-panel rounded-3xl p-8 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-center space-y-4 my-6">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto text-xl font-black border border-amber-200 dark:border-amber-800/60">
             ⚠️
           </div>
-          <h2 className="text-lg font-bold text-white">View Recovered</h2>
-          <p className="text-xs text-slate-400 max-w-md mx-auto">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">View Recovered</h2>
+          <p className="text-xs text-slate-600 dark:text-slate-400 max-w-md mx-auto">
             {this.state.error?.message || "An unexpected rendering error occurred. Please click below to refresh the active tab view."}
           </p>
           <button 
             onClick={() => this.setState({ hasError: false })} 
-            className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-amber-500/20 transition-all"
+            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-all"
           >
             Reload View
           </button>
@@ -116,7 +116,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-money-banking text-slate-100 flex flex-col font-sans selection:bg-amber-500/30 selection:text-amber-200">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-blue-500/20 selection:text-blue-900 dark:selection:text-blue-200">
       {/* Header */}
       <Header 
         onOpenAuth={() => setShowAuthModal(true)} 
@@ -192,55 +192,58 @@ export const App: React.FC = () => {
 
       {/* Quick Add Income/Expense Modal */}
       {showQuickAddModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="glass-panel rounded-3xl p-6 bg-slate-900 border-slate-800 max-w-md w-full space-y-4">
-            <h3 className="text-lg font-bold text-white capitalize">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="glass-panel rounded-3xl p-6 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 max-w-md w-full space-y-4 shadow-xl">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white capitalize flex items-center gap-2">
+              <span className={showQuickAddModal === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}>
+                {showQuickAddModal === 'income' ? '+' : '-'}
+              </span>
               Add Quick {showQuickAddModal}
             </h3>
             <form onSubmit={handleQuickAddSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-400 mb-1">Amount</label>
+                <label className="block text-slate-600 dark:text-slate-400 mb-1 font-semibold">Amount</label>
                 <input 
                   type="number" 
                   placeholder="e.g. 5000"
                   value={quickAmount}
                   onChange={(e) => setQuickAmount(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 font-bold text-base focus:outline-none focus:border-amber-500"
+                  className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-bold text-base focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   required
                 />
               </div>
               <div>
-                <label className="block text-slate-400 mb-1">Category</label>
+                <label className="block text-slate-600 dark:text-slate-400 mb-1 font-semibold">Category</label>
                 <input 
                   type="text" 
                   placeholder={showQuickAddModal === 'income' ? 'Salary, Freelance, Rental' : 'Food, Rent, Fuel, Shopping'}
                   value={quickCategory}
                   onChange={(e) => setQuickCategory(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 focus:outline-none focus:border-amber-500"
+                  className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   required
                 />
               </div>
               <div>
-                <label className="block text-slate-400 mb-1">Notes (Optional)</label>
+                <label className="block text-slate-600 dark:text-slate-400 mb-1 font-semibold">Notes (Optional)</label>
                 <input 
                   type="text" 
                   placeholder="Details..."
                   value={quickNotes}
                   onChange={(e) => setQuickNotes(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 focus:outline-none focus:border-amber-500"
+                  className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
               </div>
               <div className="flex space-x-2 pt-2">
                 <button 
                   type="button" 
                   onClick={() => setShowQuickAddModal(null)}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold"
+                  className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold shadow-lg shadow-amber-500/20"
+                  className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm transition-all cursor-pointer"
                 >
                   Save Entry
                 </button>

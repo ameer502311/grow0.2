@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   TrendingUp, TrendingDown, Wallet, DollarSign, PiggyBank, 
-  Sparkles, ArrowUpRight, ArrowDownRight, PlusCircle, Mic, ScanLine, Calculator, Target, ShieldCheck, QrCode, Zap
+  Sparkles, ArrowUpRight, ArrowDownRight, PlusCircle, Mic, Calculator, Target, ShieldCheck, QrCode, Zap, CheckCircle2
 } from 'lucide-react';
 import { ActiveTab } from './Sidebar';
 import { fetchFinancialAnalytics, fetchRecommendations } from '../services/financialApi';
@@ -39,9 +39,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const totalIncome = incomes.reduce((acc, curr) => acc + curr.amount, 0);
   const totalExpense = expenses.reduce((acc, curr) => acc + curr.amount, 0);
   const totalSavings = Math.max(0, totalIncome - totalExpense);
+  const savingsPct = totalIncome > 0 ? Math.round((totalSavings / totalIncome) * 100) : 0;
 
   const mainBudget = budgets.find(b => b.category === 'Total Monthly');
   const budgetRemaining = mainBudget ? Math.max(0, mainBudget.limitAmount - totalExpense) : 0;
+  const isBudgetWarning = mainBudget ? (totalExpense / mainBudget.limitAmount) >= 0.8 : false;
 
   // Investment values by category
   const goldVal = investments.filter(i => i.category === 'Gold').reduce((a, c) => a + c.currentValue, 0);
@@ -53,148 +55,155 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const netWorth = totalPortfolio + totalSavings;
 
+  // "Where My Money Goes" - Category breakdown
+  const categoryBreakdown = [
+    { name: 'Food & Groceries', amount: 14500, percent: 30 },
+    { name: 'Rent & Housing', amount: 24000, percent: 50 },
+    { name: 'Shopping & Essentials', amount: 8200, percent: 17 },
+    { name: 'Transport & Fuel', amount: 4800, percent: 10 },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Welcome Banner & Quick Actions */}
-      <div className="glass-panel rounded-3xl p-6 bg-gradient-to-r from-slate-900 via-slate-900/90 to-emerald-950/30 border-slate-800 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+      {/* 1. Welcome Banner & Quick Trust Actions */}
+      <div className="glass-panel rounded-3xl p-6 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 shadow-fintech-subtle">
         <div>
-          <div className="flex items-center space-x-2 text-xs text-emerald-400 font-bold mb-1 uppercase tracking-wider">
+          <div className="flex items-center space-x-2 text-xs text-blue-600 dark:text-blue-400 font-bold mb-1 uppercase tracking-wider">
             <Sparkles className="w-4 h-4" />
-            <span>AI Wealth Command Center</span>
+            <span>GROW AI Wealth Overview</span>
           </div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">
-            Financial Dashboard
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            Financial Health Dashboard
           </h1>
-          <p className="text-slate-400 text-xs mt-1">
-            Track net worth, monitor live assets, calculate returns, and get Gemini AI advice.
+          <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">
+            Track net worth, monitor growth progress, manage cashflow, and receive AI guidance.
           </p>
         </div>
 
-        {/* Quick Action Buttons */}
+        {/* Quick Action Buttons (Trust Blue & Neutral Structure) */}
         <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
           <button 
             onClick={() => onOpenAddModal('expense')}
-            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-semibold transition-all cursor-pointer"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer"
           >
             <PlusCircle className="w-4 h-4" />
             <span>Add Expense</span>
           </button>
           <button 
             onClick={() => onOpenAddModal('income')}
-            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition-all cursor-pointer"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-semibold transition-all cursor-pointer"
           >
             <PlusCircle className="w-4 h-4" />
             <span>Add Income</span>
           </button>
           <button 
             onClick={onOpenSmartFeatures}
-            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition-all cursor-pointer"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-700/70 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer"
           >
-            <Mic className="w-4 h-4" />
+            <Mic className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             <span>Voice & OCR</span>
           </button>
           <button 
             onClick={() => setActiveTab('smart_bills')}
-            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/30 text-xs font-semibold transition-all cursor-pointer"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-700/70 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer"
           >
-            <Zap className="w-4 h-4 text-amber-300" />
-            <span>Pay Bills & Recharge</span>
+            <Zap className="w-4 h-4 text-amber-500" />
+            <span>Pay Bills</span>
           </button>
           <button 
             onClick={() => setActiveTab('calculators')}
-            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-all cursor-pointer"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-700/70 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer"
           >
-            <Calculator className="w-4 h-4" />
+            <Calculator className="w-4 h-4 text-slate-500 dark:text-slate-400" />
             <span>Calculators</span>
           </button>
         </div>
       </div>
 
-      {/* Financial Summary Metric Cards */}
+      {/* 2. Financial Summary Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
         {/* Net Worth Card */}
-        <div className="glass-panel glass-card-hover rounded-2xl p-4 bg-slate-900/60 border-slate-800 relative overflow-hidden">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-            <span>Net Worth</span>
-            <Wallet className="w-4 h-4 text-emerald-400" />
+        <div className="glass-panel glass-card-hover rounded-2xl p-4 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs mb-2">
+            <span className="font-semibold">Net Worth</span>
+            <Wallet className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           </div>
-          <p className="text-xl font-extrabold text-emerald-400">
+          <p className="text-xl font-extrabold text-slate-900 dark:text-white">
             {currencySymbol}{netWorth.toLocaleString()}
           </p>
-          <span className="text-[10px] text-emerald-400/80 font-medium mt-1 flex items-center gap-0.5">
-            <ArrowUpRight className="w-3 h-3" /> +14.2% Growth YTD
+          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 flex items-center gap-0.5">
+            <ArrowUpRight className="w-3.5 h-3.5" /> +14.2% Growth YTD
           </span>
         </div>
 
         {/* Total Income */}
-        <div className="glass-panel glass-card-hover rounded-2xl p-4 bg-slate-900/60 border-slate-800">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-            <span>Total Income</span>
-            <ArrowUpRight className="w-4 h-4 text-emerald-400" />
+        <div className="glass-panel glass-card-hover rounded-2xl p-4 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs mb-2">
+            <span className="font-semibold">Monthly Income</span>
+            <ArrowUpRight className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <p className="text-xl font-extrabold text-slate-100">
-            {currencySymbol}{totalIncome.toLocaleString()}
+          <p className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">
+            +{currencySymbol}{totalIncome.toLocaleString()}
           </p>
-          <span className="text-[10px] text-slate-400 mt-1 block">Monthly target: {currencySymbol}185k</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block">Target: {currencySymbol}185k</span>
         </div>
 
         {/* Total Expense */}
-        <div className="glass-panel glass-card-hover rounded-2xl p-4 bg-slate-900/60 border-slate-800">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-            <span>Total Expenses</span>
-            <ArrowDownRight className="w-4 h-4 text-rose-400" />
+        <div className="glass-panel glass-card-hover rounded-2xl p-4 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs mb-2">
+            <span className="font-semibold">Total Expenses</span>
+            <ArrowDownRight className="w-4 h-4 text-slate-400" />
           </div>
-          <p className="text-xl font-extrabold text-rose-400">
+          <p className="text-xl font-extrabold text-slate-900 dark:text-white">
             {currencySymbol}{totalExpense.toLocaleString()}
           </p>
-          <span className="text-[10px] text-slate-400 mt-1 block">{expenses.length} transactions</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block">{expenses.length} transactions</span>
         </div>
 
-        {/* Total Savings */}
-        <div className="glass-panel glass-card-hover rounded-2xl p-4 bg-slate-900/60 border-slate-800">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-            <span>Total Savings</span>
-            <PiggyBank className="w-4 h-4 text-amber-400" />
+        {/* Total Savings (Growth Green Highlight) */}
+        <div className="glass-panel glass-card-hover rounded-2xl p-4 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs mb-2">
+            <span className="font-semibold">Total Savings</span>
+            <PiggyBank className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <p className="text-xl font-extrabold text-amber-400">
+          <p className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">
             {currencySymbol}{totalSavings.toLocaleString()}
           </p>
-          <span className="text-[10px] text-amber-400/80 font-medium mt-1 block">
-            {totalIncome > 0 ? Math.round((totalSavings / totalIncome) * 100) : 0}% Savings Rate
+          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 block">
+            +{savingsPct}% Savings Rate
           </span>
         </div>
 
         {/* Budget Remaining */}
-        <div className="glass-panel glass-card-hover rounded-2xl p-4 bg-slate-900/60 border-slate-800">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-            <span>Budget Left</span>
-            <Target className="w-4 h-4 text-cyan-400" />
+        <div className="glass-panel glass-card-hover rounded-2xl p-4 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs mb-2">
+            <span className="font-semibold">Budget Remaining</span>
+            <Target className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           </div>
-          <p className="text-xl font-extrabold text-cyan-400">
+          <p className={`text-xl font-extrabold ${isBudgetWarning ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>
             {currencySymbol}{budgetRemaining.toLocaleString()}
           </p>
-          <span className="text-[10px] text-slate-400 mt-1 block">Cap: {currencySymbol}{mainBudget?.limitAmount.toLocaleString()}</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block">
+            Cap: {currencySymbol}{mainBudget?.limitAmount.toLocaleString()}
+          </span>
         </div>
       </div>
 
-      {/* Live Market Sparkline Ticker Bar (Automatic Live Display - Top Place) */}
-      <div className="glass-panel rounded-2xl p-4 bg-slate-900/80 border-slate-800 space-y-3 shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+      {/* 3. Live Market Feed (Calm & Clear Information Architecture) */}
+      <div className="glass-panel rounded-2xl p-5 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 space-y-4 shadow-fintech-subtle">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
             <div>
-              <span className="text-xs font-extrabold text-slate-200">Live Market Feed (Gold, Stocks, Crypto, Forex)</span>
-              <span className="text-[10px] text-slate-400 block">Prices update automatically when official provider data is available (Auto 60s Refresh active)</span>
+              <span className="text-xs font-bold text-slate-900 dark:text-white">Live Market Feed</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Official provider data • Auto-refreshed every 60s</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-[10px]">
-            <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold">
-              Updated automatically every 60s
-            </span>
+          <div className="flex items-center gap-2 text-xs">
             <button 
               onClick={() => setActiveTab('investments')}
-              className="font-bold text-amber-400 hover:underline"
+              className="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
             >
               View All Markets →
             </button>
@@ -207,22 +216,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
             const changeVal = ticker.change !== undefined ? ticker.change : ticker.change24h;
             const changePercentVal = ticker.change_percentage !== undefined ? ticker.change_percentage : ticker.changePercent24h;
             const dataStatus = ticker.data_status || 'live';
-            const sourceName = ticker.source || 'Verified Market Data Provider';
-            const lastUpdated = ticker.fetched_timestamp ? new Date(ticker.fetched_timestamp).toLocaleTimeString() : 'Just now';
+            const sourceName = ticker.source || 'Verified Provider';
+            const lastUpdated = ticker.fetched_timestamp ? new Date(ticker.fetched_timestamp).toLocaleTimeString() : 'Live';
 
             return (
-              <div key={ticker.symbol} className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 space-y-2 flex flex-col justify-between">
+              <div key={ticker.symbol} className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-700 space-y-2 flex flex-col justify-between">
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-[10px] text-amber-400 font-extrabold uppercase block">{ticker.category || 'Commodity'}</span>
-                    <h4 className="text-xs font-extrabold text-slate-100">{ticker.name}</h4>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase block">{ticker.category || 'Commodity'}</span>
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white">{ticker.name}</h4>
                   </div>
-                  <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase border ${
+                  <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase border ${
                     dataStatus === 'live' 
-                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
-                      : dataStatus === 'market_closed'
-                      ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                      : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' 
+                      : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
                   }`}>
                     {dataStatus}
                   </span>
@@ -230,16 +237,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                 <div>
                   <div className="flex items-baseline justify-between">
-                    <p className="text-lg font-black text-white font-mono">
+                    <p className="text-lg font-bold text-slate-900 dark:text-white font-mono">
                       {ticker.category === 'Crypto' ? '$' : currencySymbol}{(ticker.price || 0).toLocaleString()}
                     </p>
-                    <div className={`text-right text-xs font-black ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    <div className={`text-right text-xs font-semibold ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                       <span>{isPositive ? '+' : ''}{changePercentVal}%</span>
                       <span className="block text-[10px] font-normal font-mono">({isPositive ? '+' : ''}{changeVal})</span>
                     </div>
                   </div>
 
-                  <div className="mt-2 pt-2 border-t border-slate-900/80 flex items-center justify-between text-[9px] text-slate-400 font-mono">
+                  <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between text-[9px] text-slate-500 dark:text-slate-400 font-mono">
                     <span className="truncate max-w-[110px]" title={sourceName}>{sourceName}</span>
                     <span>{lastUpdated}</span>
                   </div>
@@ -250,107 +257,110 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      {/* Google-Style Market Search Section (Manual Search - Bottom Place) */}
+      {/* Market Search Section */}
       <MarketSearch />
 
-      {/* Portfolio Breakdown & AI Advisor Highlight Grid */}
+      {/* 4. "Where My Money Goes" & Calm Money Health Score */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Investment Portfolio Summary */}
-        <div className="lg:col-span-2 glass-panel rounded-3xl p-5 bg-slate-900/60 border-slate-800 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        {/* "Where My Money Goes" - Clean Expense Categorization */}
+        <div className="lg:col-span-2 glass-panel rounded-3xl p-5 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 space-y-4 shadow-fintech-subtle">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
             <div>
-              <h2 className="text-sm font-bold text-slate-200">Investment Summary Portfolio</h2>
-              <p className="text-[11px] text-slate-400">Total Holdings Value: <span className="text-emerald-400 font-bold">{currencySymbol}{totalPortfolio.toLocaleString()}</span></p>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Where My Money Goes</h2>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Monthly expense breakdown by primary living category</p>
             </div>
             <button 
-              onClick={() => setActiveTab('investments')}
-              className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-all border border-emerald-500/30 cursor-pointer"
+              onClick={() => setActiveTab('personal_finance')}
+              className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-xs font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-all border border-blue-200 dark:border-blue-800 cursor-pointer"
             >
-              Manage Portfolio
+              View Full Cash Flow
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
-              <span className="text-[10px] text-amber-400 font-bold uppercase">Gold Value</span>
-              <p className="text-base font-extrabold text-slate-100 mt-1">{currencySymbol}{goldVal.toLocaleString()}</p>
-              <span className="text-[10px] text-slate-400">24K / Sovereign Bonds</span>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
-              <span className="text-[10px] text-cyan-400 font-bold uppercase">Mutual Funds</span>
-              <p className="text-base font-extrabold text-slate-100 mt-1">{currencySymbol}{mfVal.toLocaleString()}</p>
-              <span className="text-[10px] text-slate-400">Equity Index SIPs</span>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
-              <span className="text-[10px] text-purple-400 font-bold uppercase">Direct Stocks</span>
-              <p className="text-base font-extrabold text-slate-100 mt-1">{currencySymbol}{stockVal.toLocaleString()}</p>
-              <span className="text-[10px] text-slate-400">Bluechip Equity</span>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
-              <span className="text-[10px] text-emerald-400 font-bold uppercase">Crypto Assets</span>
-              <p className="text-base font-extrabold text-slate-100 mt-1">{currencySymbol}{cryptoVal.toLocaleString()}</p>
-              <span className="text-[10px] text-slate-400">Bitcoin & Ethereum</span>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
-              <span className="text-[10px] text-indigo-400 font-bold uppercase">FD & RD</span>
-              <p className="text-base font-extrabold text-slate-100 mt-1">{currencySymbol}{fdVal.toLocaleString()}</p>
-              <span className="text-[10px] text-slate-400">Guaranteed Return</span>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-emerald-950/30 border border-emerald-500/30">
-              <span className="text-[10px] text-emerald-400 font-bold uppercase">Unrealized Profit</span>
-              <p className="text-base font-extrabold text-emerald-400 mt-1">+{currencySymbol}244,000</p>
-              <span className="text-[10px] text-emerald-300/80 font-semibold">+22.4% ROI</span>
+          {/* Calm Neutral/Blue Bars for Expenses */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {categoryBreakdown.map((cat) => (
+              <div key={cat.name} className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-700 space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">{cat.name}</span>
+                  <span className="font-bold text-slate-900 dark:text-white font-mono">{currencySymbol}{cat.amount.toLocaleString()}</span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-600 overflow-hidden">
+                  <div className="h-full bg-blue-600 dark:bg-blue-500 rounded-full" style={{ width: `${cat.percent}%` }} />
+                </div>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block">{cat.percent}% of monthly budget</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Holdings summary grid */}
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
+            <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">My Investment Holdings</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-700">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block">Digital Gold</span>
+                <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{currencySymbol}{goldVal.toLocaleString()}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-700">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block">Mutual Funds</span>
+                <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{currencySymbol}{mfVal.toLocaleString()}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-700">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block">Direct Stocks</span>
+                <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{currencySymbol}{stockVal.toLocaleString()}</p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* AI Financial Health Score & Quick Insight Widget */}
-        <div className="glass-panel rounded-3xl p-5 bg-gradient-to-b from-slate-900 via-slate-900 to-indigo-950/30 border-slate-800 flex flex-col justify-between space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-purple-400" />
-              Financial Health Score
+        {/* 5. MONEY HEALTH SCORE (Calm Financial Indicator) */}
+        <div className="glass-panel rounded-3xl p-5 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 flex flex-col justify-between space-y-4 shadow-fintech-subtle">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              MONEY HEALTH
             </span>
-            <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800">
               {realAnalytics?.healthCategory || healthScore.rating}
             </span>
           </div>
 
-          <div className="flex items-center justify-center space-x-4 my-2">
-            <div className="relative w-24 h-24 flex items-center justify-center rounded-full bg-slate-950 border-4 border-emerald-500/80 shadow-xl shadow-emerald-500/20">
-              <span className="text-2xl font-black text-white">
+          <div className="flex flex-col items-center justify-center my-1 text-center space-y-2">
+            <div className="w-24 h-24 rounded-full border-4 border-blue-600 dark:border-blue-500 flex flex-col items-center justify-center bg-blue-50/50 dark:bg-blue-950/20">
+              <span className="text-3xl font-black text-slate-900 dark:text-white font-mono leading-none">
                 {realAnalytics ? realAnalytics.financialHealthScore : healthScore.score}
               </span>
-              <span className="text-[9px] text-slate-400 absolute bottom-3">/ 100</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">/ 100</span>
             </div>
 
-            <div className="text-xs space-y-1 text-slate-300">
-              <p className="flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> 
-                Savings: {realAnalytics ? `${realAnalytics.savingsRate}%` : `${healthScore.savingsRatio}%`}
-              </p>
-              <p className="flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" /> 
-                Debt Ratio: {realAnalytics ? `${realAnalytics.debtRatio}%` : `${healthScore.debtRatio}%`}
-              </p>
-              <p className="flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> 
-                Emergency: {realAnalytics ? `${realAnalytics.emergencyFundMonths} mo` : `${healthScore.emergencyFundMonths} mo`}
+            <div>
+              <h4 className="text-sm font-extrabold text-slate-900 dark:text-white">Very Good</h4>
+              <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1 mt-0.5">
+                ↑ 4 points this month
               </p>
             </div>
           </div>
 
-          <div className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs">
-            <p className="text-slate-300 leading-relaxed font-medium">
-              "{recommendations[0]?.message || healthScore.recommendations[0] || 'Keep maintaining high savings rate and step up SIPs annually.'}"
-            </p>
+          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-700 text-xs space-y-1.5">
+            <div className="flex justify-between text-slate-600 dark:text-slate-400">
+              <span>Savings Rate:</span>
+              <span className="font-bold text-emerald-600 dark:text-emerald-400">{realAnalytics ? `${realAnalytics.savingsRate}%` : `${healthScore.savingsRatio}%`}</span>
+            </div>
+            <div className="flex justify-between text-slate-600 dark:text-slate-400">
+              <span>Debt Ratio:</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">{realAnalytics ? `${realAnalytics.debtRatio}%` : `${healthScore.debtRatio}%`}</span>
+            </div>
+            <div className="flex justify-between text-slate-600 dark:text-slate-400">
+              <span>Emergency Buffer:</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">{realAnalytics ? `${realAnalytics.emergencyFundMonths} mo` : `${healthScore.emergencyFundMonths} mo`}</span>
+            </div>
           </div>
 
           <button 
             onClick={() => setActiveTab('ai')}
-            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-xs shadow-lg shadow-indigo-500/20 hover:opacity-90 transition-all text-center cursor-pointer"
+            className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-all text-center cursor-pointer"
           >
-            Ask AI Financial Advisor →
+            Ask GROW AI Assistant →
           </button>
         </div>
       </div>

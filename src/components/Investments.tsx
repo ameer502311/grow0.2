@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
-  TrendingUp, TrendingDown, DollarSign, Plus, Eye, RefreshCw, 
-  ArrowUpRight, ArrowDownRight, Layers, Coins, Globe, PieChart, ShieldCheck
+  TrendingUp, TrendingDown, Plus, Globe, 
+  ArrowUpRight, ArrowDownRight, BookOpen, ShieldCheck, Info
 } from 'lucide-react';
 import { AssetCategory } from '../types';
 
@@ -15,7 +15,8 @@ export const Investments: React.FC<InvestmentsProps> = ({ onOpenBuyGold }) => {
     currencySymbol, investments, tickers, addInvestment 
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'portfolio' | 'gold' | 'stocks' | 'crypto' | 'forex'>('portfolio');
+  const [activeTab, setActiveTab] = useState<'portfolio' | 'market' | 'learning' | 'forex'>('portfolio');
+  const [marketCategory, setMarketCategory] = useState<'all' | 'bullion' | 'stocks' | 'crypto'>('all');
   const [chartPeriod, setChartPeriod] = useState<'7D' | '30D' | '1Y'>('7D');
 
   // Forex converter state
@@ -66,115 +67,136 @@ export const Investments: React.FC<InvestmentsProps> = ({ onOpenBuyGold }) => {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-panel rounded-3xl p-5 bg-slate-900/60 border-slate-800">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 card-surface rounded-2xl p-5 sm:p-6">
         <div>
-          <h1 className="text-xl font-extrabold text-white">Investment & Live Markets Ecosystem</h1>
-          <p className="text-xs text-slate-400">Track 22K/24K Gold, Stocks, Crypto, Mutual Funds, Forex, and monitor total P&L ROI.</p>
+          <div className="flex items-center space-x-2 text-xs text-blue-600 dark:text-blue-400 font-semibold mb-1">
+            <TrendingUp className="w-4 h-4" />
+            <span>Investment & Asset Intelligence</span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">
+            Investments & Markets
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Clear separation between your personal portfolio, verified live market indicators, and educational learning.
+          </p>
         </div>
 
         <button 
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-1.5"
+          className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
         >
           <Plus className="w-4 h-4" /> Add Asset to Portfolio
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center space-x-2 border-b border-slate-800 pb-2 overflow-x-auto">
+      {/* Primary Section Tabs */}
+      <div className="flex items-center space-x-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto">
         <button 
           onClick={() => setActiveTab('portfolio')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${activeTab === 'portfolio' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200'}`}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap ${
+            activeTab === 'portfolio' 
+              ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 shadow-sm' 
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+          }`}
         >
-          My Portfolio ({investments.length})
+          My Investments ({investments.length})
         </button>
         <button 
-          onClick={() => setActiveTab('gold')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${activeTab === 'gold' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'text-slate-400 hover:text-slate-200'}`}
+          onClick={() => setActiveTab('market')}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap ${
+            activeTab === 'market' 
+              ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 shadow-sm' 
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+          }`}
         >
-          Gold & Silver Market
+          Market Information
         </button>
         <button 
-          onClick={() => setActiveTab('stocks')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${activeTab === 'stocks' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'text-slate-400 hover:text-slate-200'}`}
+          onClick={() => setActiveTab('learning')}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap ${
+            activeTab === 'learning' 
+              ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 shadow-sm' 
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+          }`}
         >
-          Stock Market Indices
-        </button>
-        <button 
-          onClick={() => setActiveTab('crypto')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${activeTab === 'crypto' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'text-slate-400 hover:text-slate-200'}`}
-        >
-          Cryptocurrency
+          Investment Learning
         </button>
         <button 
           onClick={() => setActiveTab('forex')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${activeTab === 'forex' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200'}`}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap ${
+            activeTab === 'forex' 
+              ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 shadow-sm' 
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+          }`}
         >
-          Currency Exchange & Converter
+          Currency Converter
         </button>
       </div>
 
-      {/* PORTFOLIO TAB */}
+      {/* 1. MY INVESTMENTS (PORTFOLIO) */}
       {activeTab === 'portfolio' && (
         <div className="space-y-6">
           {/* Portfolio Metric Bar */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <div className="glass-panel rounded-2xl p-4 bg-slate-900/60 border-slate-800">
-              <span className="text-[11px] text-slate-400 font-semibold">Total Invested</span>
-              <p className="text-xl font-extrabold text-slate-100 mt-1">{currencySymbol}{totalInvested.toLocaleString()}</p>
+            <div className="card-surface rounded-2xl p-4">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Total Invested</span>
+              <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{currencySymbol}{totalInvested.toLocaleString()}</p>
             </div>
-            <div className="glass-panel rounded-2xl p-4 bg-slate-900/60 border-slate-800">
-              <span className="text-[11px] text-slate-400 font-semibold">Current Portfolio Value</span>
-              <p className="text-xl font-extrabold text-emerald-400 mt-1">{currencySymbol}{totalCurrent.toLocaleString()}</p>
+            <div className="card-surface rounded-2xl p-4">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Current Portfolio Value</span>
+              <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{currencySymbol}{totalCurrent.toLocaleString()}</p>
             </div>
-            <div className="glass-panel rounded-2xl p-4 bg-slate-900/60 border-slate-800">
-              <span className="text-[11px] text-slate-400 font-semibold">Total Profit / Loss</span>
-              <p className={`text-xl font-extrabold mt-1 ${totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <div className="card-surface rounded-2xl p-4">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Net Profit / Loss</span>
+              <p className={`text-xl font-bold mt-1 ${totalProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                 {totalProfit >= 0 ? '+' : ''}{currencySymbol}{totalProfit.toLocaleString()}
               </p>
             </div>
-            <div className="glass-panel rounded-2xl p-4 bg-slate-900/60 border-slate-800">
-              <span className="text-[11px] text-slate-400 font-semibold">Overall Growth ROI</span>
-              <p className="text-xl font-extrabold text-cyan-400 mt-1">+{roiPercent}%</p>
+            <div className="card-surface rounded-2xl p-4">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Overall Portfolio Return</span>
+              <p className={`text-xl font-bold mt-1 ${Number(roiPercent) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                {Number(roiPercent) >= 0 ? '+' : ''}{roiPercent}%
+              </p>
             </div>
           </div>
 
           {/* Holdings Table */}
-          <div className="glass-panel rounded-3xl overflow-hidden border-slate-800">
-            <div className="p-4 border-b border-slate-800 font-bold text-xs text-slate-200">
-              Asset Allocation & Holding Breakdown
+          <div className="card-surface rounded-2xl overflow-hidden">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 font-bold text-xs text-slate-900 dark:text-slate-100">
+              My Investment Holdings
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-900/90 text-slate-400 font-bold uppercase text-[10px] tracking-wider border-b border-slate-800">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 uppercase font-semibold text-[10px] border-b border-slate-200 dark:border-slate-800">
                   <tr>
-                    <th className="py-3.5 px-4">Asset Name</th>
-                    <th className="py-3.5 px-4">Category</th>
-                    <th className="py-3.5 px-4 text-right">Invested</th>
-                    <th className="py-3.5 px-4 text-right">Current Value</th>
-                    <th className="py-3.5 px-4 text-right">P&L</th>
-                    <th className="py-3.5 px-4 text-right">ROI %</th>
+                    <th className="py-3 px-4">Asset Name</th>
+                    <th className="py-3 px-4">Category</th>
+                    <th className="py-3 px-4 text-right">Invested</th>
+                    <th className="py-3 px-4 text-right">Current Value</th>
+                    <th className="py-3 px-4 text-right">P&L</th>
+                    <th className="py-3 px-4 text-right">Return %</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
                   {investments.map((inv) => {
                     const profit = inv.currentValue - inv.investedAmount;
                     const roi = ((profit / inv.investedAmount) * 100).toFixed(1);
+                    const isPositive = profit >= 0;
                     return (
-                      <tr key={inv.id} className="hover:bg-slate-900/40 transition-colors">
-                        <td className="py-3.5 px-4 font-bold text-white">{inv.name}</td>
-                        <td className="py-3.5 px-4">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                      <tr key={inv.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-850 transition-colors">
+                        <td className="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">{inv.name}</td>
+                        <td className="py-3 px-4">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                             {inv.category}
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-right text-slate-400">{currencySymbol}{inv.investedAmount.toLocaleString()}</td>
-                        <td className="py-3.5 px-4 text-right font-bold text-slate-100">{currencySymbol}{inv.currentValue.toLocaleString()}</td>
-                        <td className={`py-3.5 px-4 text-right font-bold ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {profit >= 0 ? '+' : ''}{currencySymbol}{profit.toLocaleString()}
+                        <td className="py-3 px-4 text-right text-slate-600 dark:text-slate-400">{currencySymbol}{inv.investedAmount.toLocaleString()}</td>
+                        <td className="py-3 px-4 text-right font-semibold text-slate-900 dark:text-slate-100">{currencySymbol}{inv.currentValue.toLocaleString()}</td>
+                        <td className={`py-3 px-4 text-right font-semibold ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {isPositive ? '+' : ''}{currencySymbol}{profit.toLocaleString()}
                         </td>
-                        <td className={`py-3.5 px-4 text-right font-bold ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {profit >= 0 ? '+' : ''}{roi}%
+                        <td className={`py-3 px-4 text-right font-semibold ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {isPositive ? '+' : ''}{roi}%
                         </td>
                       </tr>
                     );
@@ -186,144 +208,232 @@ export const Investments: React.FC<InvestmentsProps> = ({ onOpenBuyGold }) => {
         </div>
       )}
 
-      {/* GOLD TAB */}
-      {activeTab === 'gold' && (
+      {/* 2. MARKET INFORMATION (Section 16 & 17) */}
+      {activeTab === 'market' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="glass-panel rounded-3xl p-5 bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/30 border-slate-800">
-              <span className="text-amber-400 text-xs font-bold uppercase tracking-wider">24K Gold Price (10g)</span>
-              <p className="text-2xl font-black text-white mt-1">₹{goldTicker?.price.toLocaleString()}</p>
-              <span className="text-emerald-400 text-xs font-bold mt-1 block">+₹380 (0.51%) Today</span>
-            </div>
-
-            <div className="glass-panel rounded-3xl p-5 bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/30 border-slate-800">
-              <span className="text-amber-400 text-xs font-bold uppercase tracking-wider">22K Gold Price (10g)</span>
-              <p className="text-2xl font-black text-white mt-1">₹68,060</p>
-              <span className="text-emerald-400 text-xs font-bold mt-1 block">+₹350 (0.52%) Today</span>
-            </div>
-
-            <div className="glass-panel rounded-3xl p-5 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border-slate-800">
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Silver Live Price (1kg)</span>
-              <p className="text-2xl font-black text-white mt-1">₹{silverTicker?.price.toLocaleString()}</p>
-              <span className="text-rose-400 text-xs font-bold mt-1 block">-₹420 (-0.47%) Today</span>
-            </div>
+          {/* Sub Filter */}
+          <div className="flex items-center gap-2">
+            {(['all', 'bullion', 'stocks', 'crypto'] as const).map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setMarketCategory(cat)}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-colors ${
+                  marketCategory === cat
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                }`}
+              >
+                {cat === 'all' ? 'All Markets' : cat}
+              </button>
+            ))}
           </div>
 
-          {/* Buy Gold quick trigger card */}
-          {onOpenBuyGold && (
-            <div className="glass-panel rounded-3xl p-5 bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
-              <div>
-                <h3 className="font-extrabold text-sm text-white">Buy 24K Digital Gold Instant Savings</h3>
-                <p className="text-xs text-slate-400">Insured vault storage via SafeGold & Augmont starting at ₹10.</p>
+          {/* Bullion Cards */}
+          {(marketCategory === 'all' || marketCategory === 'bullion') && (
+            <div className="space-y-3">
+              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                Precious Metals (Bullion)
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="card-surface rounded-2xl p-5 border-slate-200 dark:border-slate-800">
+                  <div className="flex justify-between items-start">
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">24K Digital Gold (10g)</span>
+                    <span className="text-[10px] text-slate-400">Live Feed</span>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-2">
+                    ₹{goldTicker?.price.toLocaleString() || '74,500'}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className="inline-flex items-center text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      <ArrowUpRight className="w-3.5 h-3.5" /> +₹380 (+0.51%)
+                    </span>
+                    <span className="text-[10px] text-slate-400">• Updated 10:30 AM</span>
+                  </div>
+                </div>
+
+                <div className="card-surface rounded-2xl p-5 border-slate-200 dark:border-slate-800">
+                  <div className="flex justify-between items-start">
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">22K Standard Gold (10g)</span>
+                    <span className="text-[10px] text-slate-400">Live Feed</span>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-2">₹68,300</p>
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className="inline-flex items-center text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      <ArrowUpRight className="w-3.5 h-3.5" /> +₹350 (+0.52%)
+                    </span>
+                    <span className="text-[10px] text-slate-400">• Updated 10:30 AM</span>
+                  </div>
+                </div>
+
+                <div className="card-surface rounded-2xl p-5 border-slate-200 dark:border-slate-800">
+                  <div className="flex justify-between items-start">
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Silver 999 (1kg)</span>
+                    <span className="text-[10px] text-slate-400">Live Feed</span>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-2">
+                    ₹{silverTicker?.price.toLocaleString() || '89,200'}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className="inline-flex items-center text-xs font-semibold text-red-600 dark:text-red-400">
+                      <ArrowDownRight className="w-3.5 h-3.5" /> -₹420 (-0.47%)
+                    </span>
+                    <span className="text-[10px] text-slate-400">• Updated 10:30 AM</span>
+                  </div>
+                </div>
               </div>
-              <button 
-                onClick={() => onOpenBuyGold(1000)}
-                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-amber-500/20"
-              >
-                Buy Digital Gold Now
-              </button>
+
+              {onOpenBuyGold && (
+                <div className="card-surface rounded-2xl p-4 border border-blue-200 dark:border-blue-900 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">Digital Gold Accumulation</h3>
+                    <p className="text-xs text-slate-500">24K 99.9% pure gold stored in insured vaults starting at ₹10.</p>
+                  </div>
+                  <button 
+                    onClick={() => onOpenBuyGold(1000)}
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+                  >
+                    Buy Gold
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Historical Price Chart Simulation */}
-          <div className="glass-panel rounded-3xl p-6 bg-slate-900/60 border-slate-800 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-sm text-slate-200">Historical Bullion Price Trend</h3>
-              <div className="flex space-x-1">
-                {(['7D', '30D', '1Y'] as const).map(p => (
-                  <button 
-                    key={p} 
-                    onClick={() => setChartPeriod(p)}
-                    className={`px-3 py-1 rounded-lg text-xs font-semibold ${chartPeriod === p ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}
-                  >
-                    {p}
-                  </button>
+          {/* Stocks & Indices */}
+          {(marketCategory === 'all' || marketCategory === 'stocks') && (
+            <div className="space-y-3">
+              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                Major Market Indices & Stocks
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {tickers.filter(t => t.category === 'Stock').map((stock) => {
+                  const isPositive = stock.change24h >= 0;
+                  return (
+                    <div key={stock.symbol} className="card-surface rounded-2xl p-4 flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">{stock.name}</h3>
+                        <span className="text-[11px] text-slate-500 font-mono">{stock.symbol}</span>
+                        <p className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-1">{currencySymbol}{stock.price.toLocaleString()}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className={`text-xs font-semibold flex items-center justify-end gap-1 ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {isPositive ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                          {isPositive ? '+' : ''}{stock.changePercent24h}%
+                        </span>
+                        <span className="text-[10px] text-slate-400 block mt-1">24h Change</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Crypto Assets */}
+          {(marketCategory === 'all' || marketCategory === 'crypto') && (
+            <div className="space-y-3">
+              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                Digital Assets & Crypto
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {tickers.filter(t => t.category === 'Crypto').map((crypto) => (
+                  <div key={crypto.symbol} className="card-surface rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">{crypto.name}</h3>
+                      <span className="text-[11px] text-slate-500 font-mono">{crypto.symbol}</span>
+                      <p className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-1">${crypto.price.toLocaleString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-end gap-1">
+                        <ArrowUpRight className="w-3.5 h-3.5" /> +{crypto.changePercent24h}%
+                      </span>
+                      <span className="text-[10px] text-slate-400 block mt-1">Market Cap: Tier 1</span>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
+          )}
+        </div>
+      )}
 
-            <div className="h-48 flex items-end justify-between space-x-2 pt-6 px-4 bg-slate-950/60 rounded-2xl border border-slate-800">
-              {goldTicker?.history7d.map((val, idx) => (
-                <div key={idx} className="flex-1 flex flex-col items-center gap-2">
-                  <span className="text-[10px] text-slate-400">₹{(val / 1000).toFixed(1)}k</span>
-                  <div 
-                    className="w-full bg-gradient-to-t from-amber-500/30 to-amber-400 rounded-t-md hover:opacity-90 transition-all"
-                    style={{ height: `${((val - 70000) / 5000) * 100}%` }}
-                  />
-                </div>
-              ))}
+      {/* 3. INVESTMENT LEARNING (PURPLE IDENTITY - Section 5 & 16) */}
+      {activeTab === 'learning' && (
+        <div className="space-y-5">
+          <div className="card-surface rounded-2xl p-6 border-purple-200 dark:border-purple-900 space-y-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                <BookOpen className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                  Investment Principles & Financial Literacy
+                </h2>
+                <span className="inline-flex items-center gap-1 text-[11px] text-purple-700 dark:text-purple-300 font-medium">
+                  <ShieldCheck className="w-3 h-3" /> Educational Reference Only • Not Guaranteed Advice
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              GROW 0.2 provides educational learning frameworks to help you make informed, calm financial decisions. All investments are subject to market risks.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+              <div className="p-4 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/50 space-y-2">
+                <span className="text-xs font-bold text-purple-700 dark:text-purple-300">1. Power of Compounding</span>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Regular monthly savings invested in disciplined index funds or SIPs benefit from exponential compounding over a 5 to 10 year horizon.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/50 space-y-2">
+                <span className="text-xs font-bold text-purple-700 dark:text-purple-300">2. Asset Allocation</span>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Diversify capital across equities, debt instruments, and digital gold to buffer against localized market downturns.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/50 space-y-2">
+                <span className="text-xs font-bold text-purple-700 dark:text-purple-300">3. Emergency Buffer First</span>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Maintain 3 to 6 months of living expenses in liquid savings before deploying capital into higher-volatility growth assets.
+                </p>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* STOCKS TAB */}
-      {activeTab === 'stocks' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {tickers.filter(t => t.category === 'Stock').map((stock) => (
-            <div key={stock.symbol} className="glass-panel rounded-3xl p-5 bg-slate-900/60 border-slate-800 flex items-center justify-between">
-              <div>
-                <h3 className="font-extrabold text-base text-white">{stock.name}</h3>
-                <span className="text-[11px] text-slate-400 font-mono">{stock.symbol}</span>
-                <p className="text-xl font-bold text-slate-100 mt-2">{currencySymbol}{stock.price.toLocaleString()}</p>
-              </div>
-              <div className="text-right">
-                <span className={`text-sm font-extrabold flex items-center gap-1 ${stock.change24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {stock.change24h >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                  {stock.change24h >= 0 ? '+' : ''}{stock.changePercent24h}%
-                </span>
-                <span className="text-[10px] text-slate-500 block mt-1">24h Vol: High</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* CRYPTO TAB */}
-      {activeTab === 'crypto' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {tickers.filter(t => t.category === 'Crypto').map((crypto) => (
-            <div key={crypto.symbol} className="glass-panel rounded-3xl p-5 bg-slate-900/60 border-slate-800 flex items-center justify-between">
-              <div>
-                <h3 className="font-extrabold text-base text-white">{crypto.name}</h3>
-                <p className="text-xl font-bold text-slate-100 mt-2">${crypto.price.toLocaleString()}</p>
-              </div>
-              <div className="text-right">
-                <span className="text-sm font-extrabold text-emerald-400 flex items-center gap-1">
-                  <ArrowUpRight className="w-4 h-4" /> +{crypto.changePercent24h}%
-                </span>
-                <span className="text-[10px] text-slate-400 block mt-1">Market Cap: Tier 1</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* FOREX CONVERTER TAB */}
+      {/* 4. CURRENCY CONVERTER (Section 18) */}
       {activeTab === 'forex' && (
-        <div className="glass-panel rounded-3xl p-6 bg-slate-900/60 border-slate-800 max-w-lg space-y-4">
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <Globe className="w-5 h-5 text-emerald-400" /> Live Currency Converter
-          </h2>
+        <div className="card-surface rounded-2xl p-6 max-w-lg space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <Globe className="w-5 h-5 text-blue-600" />
+              Currency Converter
+            </h2>
+            <span className="text-[10px] text-slate-500">Updated: Live Mid-Market</span>
+          </div>
 
-          <div className="space-y-3 text-xs">
+          <div className="space-y-4 text-xs">
             <div>
-              <label className="block text-slate-400 mb-1">Amount</label>
+              <label className="block text-slate-700 dark:text-slate-300 font-medium mb-1">Amount</label>
               <input 
                 type="number"
                 value={fxAmount}
                 onChange={(e) => setFxAmount(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 font-bold"
+                className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:border-blue-600"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-slate-400 mb-1">From</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-medium mb-1">From</label>
                 <select 
                   value={fxFrom}
                   onChange={(e) => setFxFrom(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100"
+                  className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600"
                 >
                   <option value="USD">USD ($)</option>
                   <option value="INR">INR (₹)</option>
@@ -331,11 +441,11 @@ export const Investments: React.FC<InvestmentsProps> = ({ onOpenBuyGold }) => {
                 </select>
               </div>
               <div>
-                <label className="block text-slate-400 mb-1">To</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-medium mb-1">To</label>
                 <select 
                   value={fxTo}
                   onChange={(e) => setFxTo(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100"
+                  className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600"
                 >
                   <option value="INR">INR (₹)</option>
                   <option value="USD">USD ($)</option>
@@ -344,9 +454,14 @@ export const Investments: React.FC<InvestmentsProps> = ({ onOpenBuyGold }) => {
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 text-center">
-              <span className="text-[11px] text-emerald-400 uppercase tracking-wider block font-bold">Converted Total</span>
-              <p className="text-2xl font-black text-white mt-1">{fxTo === 'INR' ? '₹' : '$'}{getFxConverted()}</p>
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+              <span className="text-[11px] text-slate-500 uppercase font-medium block">Converted Amount</span>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">
+                {fxTo === 'INR' ? '₹' : '$'}{getFxConverted()}
+              </p>
+              <span className="text-[10px] text-blue-600 dark:text-blue-400 mt-1 block">
+                1 {fxFrom} = {fxFrom === 'USD' ? '83.72 INR' : fxFrom === 'EUR' ? '91.20 INR' : '0.012 USD'}
+              </span>
             </div>
           </div>
         </div>
@@ -354,27 +469,27 @@ export const Investments: React.FC<InvestmentsProps> = ({ onOpenBuyGold }) => {
 
       {/* Add Asset Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="glass-panel rounded-3xl p-6 bg-slate-900 border-slate-800 max-w-md w-full space-y-4">
-            <h2 className="text-lg font-bold text-white">Add Asset to Portfolio</h2>
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="card-surface rounded-2xl p-6 border border-slate-200 dark:border-slate-800 max-w-md w-full space-y-4 shadow-xl">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Add Asset to Portfolio</h2>
             <form onSubmit={handleAddInvestment} className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-400 mb-1">Asset Name</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-medium mb-1">Asset Name</label>
                 <input 
                   type="text" 
-                  placeholder="e.g. Reliance Stock, Sovereign Gold, BTC" 
+                  placeholder="e.g. Sovereign Gold Bond, Nifty ETF, HDFC Bank" 
                   value={invName} 
                   onChange={(e) => setInvName(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200"
+                  className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600"
                   required
                 />
               </div>
               <div>
-                <label className="block text-slate-400 mb-1">Category</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-medium mb-1">Category</label>
                 <select 
-                  value={invCategory}
+                  value={invCategory} 
                   onChange={(e) => setInvCategory(e.target.value as AssetCategory)}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200"
+                  className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600"
                 >
                   <option value="Gold">Gold</option>
                   <option value="Stocks">Stocks</option>
@@ -386,24 +501,24 @@ export const Investments: React.FC<InvestmentsProps> = ({ onOpenBuyGold }) => {
                 </select>
               </div>
               <div>
-                <label className="block text-slate-400 mb-1">Invested Amount ({currencySymbol})</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-medium mb-1">Invested Amount ({currencySymbol})</label>
                 <input 
                   type="number" 
                   placeholder="50000" 
                   value={invInvested} 
                   onChange={(e) => setInvInvested(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200"
+                  className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600"
                   required
                 />
               </div>
               <div>
-                <label className="block text-slate-400 mb-1">Current Value ({currencySymbol})</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-medium mb-1">Current Value ({currencySymbol})</label>
                 <input 
                   type="number" 
                   placeholder="65000" 
                   value={invCurrent} 
                   onChange={(e) => setInvCurrent(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200"
+                  className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600"
                   required
                 />
               </div>
@@ -411,13 +526,13 @@ export const Investments: React.FC<InvestmentsProps> = ({ onOpenBuyGold }) => {
                 <button 
                   type="button" 
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-400"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
-                  className="px-4 py-2 rounded-xl bg-emerald-500 text-white font-bold"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm"
                 >
                   Add Asset
                 </button>

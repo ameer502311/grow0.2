@@ -12,7 +12,7 @@ export const DynamicBillerForm: React.FC<DynamicBillerFormProps> = ({
   fields,
   onSubmit,
   loading = false,
-  submitButtonText = 'Proceed to Fetch Bill'
+  submitButtonText = 'Fetch Bill Details'
 }) => {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -66,24 +66,24 @@ export const DynamicBillerForm: React.FC<DynamicBillerFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-4 text-xs">
       {fields.map(field => (
         <div key={field.name} className="space-y-1">
-          <label className="block text-slate-300 font-semibold">
-            {field.label} {field.required && <span className="text-rose-400">*</span>}
+          <label className="block text-slate-700 dark:text-slate-300 font-medium">
+            {field.label} {field.required && <span className="text-red-500">*</span>}
           </label>
           <input
             type={field.type === 'number' ? 'number' : 'text'}
             placeholder={field.hint || `Enter ${field.label}`}
             value={formData[field.name] || ''}
             onChange={e => handleChange(field.name, e.target.value)}
-            className={`w-full p-3 rounded-xl bg-slate-950 border text-slate-100 focus:outline-none transition-all ${
+            className={`w-full p-2.5 rounded-xl bg-white dark:bg-slate-900 border text-slate-900 dark:text-slate-100 text-xs focus:outline-none transition-colors ${
               errors[field.name] 
-                ? 'border-rose-500/80 focus:border-rose-500' 
-                : 'border-slate-800 focus:border-emerald-500'
+                ? 'border-red-500 focus:border-red-500' 
+                : 'border-slate-300 dark:border-slate-700 focus:border-blue-600 dark:focus:border-blue-500'
             }`}
           />
           {errors[field.name] ? (
-            <p className="text-[10px] text-rose-400 font-semibold">{errors[field.name]}</p>
+            <p className="text-[10px] text-red-600 dark:text-red-400 font-medium">{errors[field.name]}</p>
           ) : (
-            field.hint && <p className="text-[10px] text-slate-500">{field.hint}</p>
+            field.hint && <p className="text-[10px] text-slate-500 dark:text-slate-400">{field.hint}</p>
           )}
         </div>
       ))}
@@ -91,7 +91,7 @@ export const DynamicBillerForm: React.FC<DynamicBillerFormProps> = ({
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-extrabold text-xs shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 cursor-pointer"
+        className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
       >
         {loading ? 'Processing Provider Request...' : submitButtonText}
       </button>

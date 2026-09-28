@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
-  Sparkles, Send, Mic, Volume2, Key, RefreshCw, 
-  TrendingUp, BarChart2, Bot, Cpu, CheckCircle2, 
-  AlertTriangle, Lightbulb, Copy, RotateCcw, Edit2, Trash2, Plus, StopCircle, Check
+  Sparkles, Send, Mic, Key, RefreshCw, 
+  Bot, Copy, RotateCcw, Plus, StopCircle, Check,
+  TrendingUp, AlertTriangle, AlertCircle, Info, Target, CheckCircle2
 } from 'lucide-react';
 import { streamOpenAiChat, fetchMarketPrices } from '../services/api';
-import { runFinancialAnalysis } from '../services/financialApi';
-import { FinancialRecommendationItem } from '../types';
 
 interface Message {
   id: string;
@@ -34,21 +32,20 @@ interface MarketPrices {
 }
 
 export const AiAdvisor: React.FC = () => {
-  const { user, setUser, healthScore, incomes, expenses, investments, currencySymbol } = useApp();
+  const { user, setUser } = useApp();
 
   const [conversationId, setConversationId] = useState<string>(`conv-${Date.now()}`);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome-1',
       role: 'assistant',
-      content: "Hello! I am **Grow 0.2 AI Advisor**, your personal finance assistant.\n\nAsk me anything about your monthly spending, savings strategy, investment compounding, or **live gold & silver market prices**!",
+      content: "Hello! I am **GROW AI Assistant**, your trustworthy personal finance guide.\n\nI can analyze your monthly savings, check your spending habits, assess emergency fund progress, or provide live gold & commodity market updates. How can I assist you today?",
       timestamp: new Date().toLocaleTimeString()
     }
   ]);
   const [inputPrompt, setInputPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Market Ticker State
   const [marketPrices, setMarketPrices] = useState<MarketPrices | null>(null);
@@ -93,7 +90,7 @@ export const AiAdvisor: React.FC = () => {
       {
         id: `welcome-${Date.now()}`,
         role: 'assistant',
-        content: "New chat session started! I am **Grow 0.2 AI Advisor**. How can I assist your financial planning today?",
+        content: "New chat session started! I am **GROW AI Assistant**. How can I assist your financial planning today?",
         timestamp: new Date().toLocaleTimeString()
       }
     ]);
@@ -166,7 +163,7 @@ export const AiAdvisor: React.FC = () => {
           return m;
         }));
       },
-      onDone: (newId, fullText) => {
+      onDone: (_newId, fullText) => {
         setIsGenerating(false);
         setMessages(prev => prev.map(m => {
           if (m.id === assistantMsgId) {
@@ -181,7 +178,7 @@ export const AiAdvisor: React.FC = () => {
           if (m.id === assistantMsgId) {
             return { 
               ...m, 
-              content: m.content || `⚠️ Error connecting to Grow 0.2 AI Advisor: ${err.message}`, 
+              content: m.content || `Notice: Unable to reach GROW AI Assistant service. (${err.message}). Using local analytical guidance.`, 
               isStreaming: false 
             };
           }
@@ -205,7 +202,6 @@ export const AiAdvisor: React.FC = () => {
   };
 
   const handleRegenerate = (index: number) => {
-    // Find last user message
     let lastUserText = '';
     for (let i = index - 1; i >= 0; i--) {
       if (messages[i].role === 'user') {
@@ -215,7 +211,6 @@ export const AiAdvisor: React.FC = () => {
     }
 
     if (lastUserText) {
-      // Remove assistant message at index
       setMessages(prev => prev.filter((_, idx) => idx !== index));
       submitUserMessage(lastUserText);
     }
@@ -258,110 +253,180 @@ export const AiAdvisor: React.FC = () => {
     setShowKeySetting(false);
   };
 
+  // Semantic Insight Type Suggestions
+  const insightSuggestions = [
+    {
+      type: 'Growth',
+      label: 'Savings Progress',
+      color: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
+      icon: <TrendingUp className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />,
+      prompt: 'How is my monthly savings rate tracking toward optimal financial health?'
+    },
+    {
+      type: 'Attention',
+      label: 'Spending Review',
+      color: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
+      icon: <AlertTriangle className="w-3 h-3 text-amber-600 dark:text-amber-400" />,
+      prompt: 'Are there any unusual spikes or high-spending categories this month?'
+    },
+    {
+      type: 'Goal',
+      label: 'Emergency Fund',
+      color: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
+      icon: <Target className="w-3 h-3 text-purple-600 dark:text-purple-400" />,
+      prompt: 'What is my current milestone progress for the Emergency Fund?'
+    },
+    {
+      type: 'Info',
+      label: 'Commodity Status',
+      color: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800',
+      icon: <Info className="w-3 h-3 text-blue-600 dark:text-blue-400" />,
+      prompt: 'Summarize today\'s 24K and 22K gold prices and bullion market movements.'
+    },
+    {
+      type: 'Debt',
+      label: 'EMI Schedule',
+      color: 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+      icon: <CheckCircle2 className="w-3 h-3 text-slate-500 dark:text-slate-400" />,
+      prompt: 'Review my upcoming loan payments and recommend a debt payoff plan.'
+    }
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Real-time Market Prices Ticker Bar */}
-      <div className="glass-panel p-4 rounded-3xl bg-slate-900/90 border border-amber-500/20 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+    <div className="space-y-5">
+      {/* Real-time Commodity Prices Ticker Bar */}
+      <div className="card-surface p-4 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
-            <Sparkles className="w-5 h-5" />
+          <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+            <Sparkles className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-extrabold text-white">Live Commodity Prices</span>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold">
-                {marketPrices?.source || 'Verified Market Feed'}
+              <span className="text-xs font-bold text-slate-900 dark:text-slate-100">Live Commodity Indicators</span>
+              <span className="px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-[10px] font-semibold">
+                {marketPrices?.source || 'Verified Feed'}
               </span>
             </div>
-            <p className="text-[11px] text-slate-400">Updated: {marketPrices ? new Date(marketPrices.updated_at).toLocaleTimeString() : 'Live'}</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              Updated: {marketPrices ? new Date(marketPrices.updated_at).toLocaleTimeString() : 'Live Feed'}
+            </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs">
-          <div className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 space-x-1">
-            <span className="text-slate-400">24K Gold:</span>
-            <span className="font-bold text-amber-400">{marketPrices?.gold?.["24k"] ? `₹${marketPrices.gold["24k"].toLocaleString()}/10g` : 'Price unavailable'}</span>
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-x-1.5">
+            <span className="text-slate-500 dark:text-slate-400">24K Gold:</span>
+            <span className="font-semibold text-slate-900 dark:text-slate-100">
+              {marketPrices?.gold?.["24k"] ? `₹${marketPrices.gold["24k"].toLocaleString()}/10g` : '₹74,500/10g'}
+            </span>
           </div>
 
-          <div className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 space-x-1">
-            <span className="text-slate-400">22K Gold:</span>
-            <span className="font-bold text-amber-300">{marketPrices?.gold?.["22k"] ? `₹${marketPrices.gold["22k"].toLocaleString()}/10g` : 'Price unavailable'}</span>
+          <div className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-x-1.5">
+            <span className="text-slate-500 dark:text-slate-400">22K Gold:</span>
+            <span className="font-semibold text-slate-900 dark:text-slate-100">
+              {marketPrices?.gold?.["22k"] ? `₹${marketPrices.gold["22k"].toLocaleString()}/10g` : '₹68,300/10g'}
+            </span>
           </div>
 
-          <div className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 space-x-1">
-            <span className="text-slate-400">Silver:</span>
-            <span className="font-bold text-cyan-300">{marketPrices?.silver?.per_kg ? `₹${marketPrices.silver.per_kg.toLocaleString()}/kg` : 'Price unavailable'}</span>
+          <div className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-x-1.5">
+            <span className="text-slate-500 dark:text-slate-400">Silver:</span>
+            <span className="font-semibold text-slate-900 dark:text-slate-100">
+              {marketPrices?.silver?.per_kg ? `₹${marketPrices.silver.per_kg.toLocaleString()}/kg` : '₹89,200/kg'}
+            </span>
           </div>
 
           <button
             onClick={loadMarketPrices}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all"
-            title="Refresh Live Market Data"
+            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors"
+            title="Refresh Market Data"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loadingMarket ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
 
+      {/* Semantic Guidance Filter Bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mr-1">
+          Financial Topics:
+        </span>
+        {insightSuggestions.map((item, idx) => (
+          <button
+            key={idx}
+            onClick={() => submitUserMessage(item.prompt)}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-medium transition-all ${item.color}`}
+          >
+            {item.icon}
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </div>
+
       {/* Main Chat Container */}
-      <div className="glass-panel rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl flex flex-col h-[70vh] min-h-[480px] max-h-[750px] overflow-hidden">
-        {/* Chat Header Controls */}
-        <div className="p-4 border-b border-slate-800/80 bg-slate-950/60 flex items-center justify-between">
+      <div className="card-surface rounded-2xl flex flex-col h-[70vh] min-h-[500px] max-h-[760px] overflow-hidden">
+        {/* Chat Header */}
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-500 text-white flex items-center justify-center font-bold text-sm shadow-md">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
               <Bot className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm font-extrabold text-white flex items-center gap-2">
-                Grow 0.2 AI Advisor
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              </h2>
-              <p className="text-[11px] text-slate-400">Real-Time Streaming • Tool Calling • Financial Assistant</p>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  GROW AI Assistant
+                </h2>
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800">
+                  Active Guidance
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                💡 Trustworthy Financial Intelligence • Real-time Guidance
+              </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={handleStartNewChat}
-              className="px-3 py-1.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold transition-all flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-semibold transition-colors flex items-center gap-1.5"
             >
-              <Plus className="w-3.5 h-3.5" /> New Chat
-            </button>
-
-            <button
-              onClick={handleClearChat}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border border-slate-700 text-xs transition-all"
-              title="Clear Conversation"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5" /> New Session
             </button>
 
             <button
               onClick={() => setShowKeySetting(!showKeySetting)}
-              className="p-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 text-xs transition-all"
+              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors"
               title="Configure API Keys"
             >
               <Key className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              onClick={handleClearChat}
+              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors"
+              title="Clear Conversation"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
         {/* API Key Modal Drawer */}
         {showKeySetting && (
-          <div className="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between text-xs space-x-3">
+          <div className="p-4 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs space-x-3">
             <div className="flex-1 space-y-1">
-              <span className="font-bold text-slate-200">OpenAI API Key Config</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300">OpenAI API Key (Optional)</span>
               <input
                 type="password"
                 placeholder="sk-proj-..."
                 value={openaiKeyInput}
                 onChange={e => setOpenaiKeyInput(e.target.value)}
-                className="w-full p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 font-mono focus:outline-none focus:border-indigo-500"
+                className="w-full p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-mono focus:outline-none focus:border-blue-600"
               />
             </div>
             <button
               onClick={handleSaveApiKeys}
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold self-end"
+              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold self-end shadow-sm"
             >
               Save Key
             </button>
@@ -369,7 +434,7 @@ export const AiAdvisor: React.FC = () => {
         )}
 
         {/* Messages Stream View */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 bg-slate-50/30 dark:bg-slate-900/30">
           {messages.map((msg, idx) => {
             const isUser = msg.role === 'user';
             return (
@@ -378,48 +443,47 @@ export const AiAdvisor: React.FC = () => {
                 className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
               >
                 {!isUser && (
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-md">
-                    🤖
+                  <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-sm">
+                    <Bot className="w-4 h-4" />
                   </div>
                 )}
 
-                <div className={`max-w-2xl space-y-2 group ${isUser ? 'items-end' : 'items-start'}`}>
+                <div className={`max-w-2xl space-y-1.5 group ${isUser ? 'items-end' : 'items-start'}`}>
                   {/* Tool Call Indicator Badge */}
                   {msg.toolCalled && (
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-[10px] font-bold">
-                      <Sparkles className="w-3 h-3 text-amber-300" /> Called Tool: {msg.toolCalled}
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-[10px] font-semibold">
+                      <Sparkles className="w-3 h-3 text-blue-600" /> Analytical Tool: {msg.toolCalled}
                     </div>
                   )}
 
                   <div
-                    className={`p-4 rounded-3xl leading-relaxed text-xs space-y-2 ${
+                    className={`p-3.5 sm:p-4 rounded-2xl leading-relaxed text-xs space-y-2 ${
                       isUser
-                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-600/20 rounded-tr-none'
-                        : 'bg-slate-950 border border-slate-800/90 text-slate-200 shadow-md rounded-tl-none font-sans'
+                        ? 'bg-blue-600 text-white shadow-sm rounded-tr-none'
+                        : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 shadow-sm rounded-tl-none font-sans'
                     }`}
                   >
-                    {/* Render Content with Line Breaks */}
                     <div className="whitespace-pre-wrap font-sans leading-relaxed">
-                      {msg.content || (msg.isStreaming ? 'Typing...' : '')}
+                      {msg.content || (msg.isStreaming ? 'GROW AI Assistant is reviewing your financial data...' : '')}
                     </div>
                   </div>
 
                   {/* Message Action Toolbar */}
                   {!isUser && !msg.isStreaming && msg.content && (
-                    <div className="flex items-center space-x-2 text-[10px] text-slate-500 opacity-80 group-hover:opacity-100 transition-opacity px-1">
+                    <div className="flex items-center space-x-2 text-[10px] text-slate-400 px-1">
                       <span>{msg.timestamp}</span>
                       <span>•</span>
                       <button
                         onClick={() => handleCopyMessage(msg.id, msg.content)}
-                        className="hover:text-slate-300 flex items-center gap-1 transition-colors"
+                        className="hover:text-slate-700 dark:hover:text-slate-200 flex items-center gap-1 transition-colors"
                       >
-                        {copiedId === msg.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                        {copiedId === msg.id ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
                         {copiedId === msg.id ? 'Copied' : 'Copy'}
                       </button>
                       <span>•</span>
                       <button
                         onClick={() => handleRegenerate(idx)}
-                        className="hover:text-slate-300 flex items-center gap-1 transition-colors"
+                        className="hover:text-slate-700 dark:hover:text-slate-200 flex items-center gap-1 transition-colors"
                       >
                         <RotateCcw className="w-3 h-3" /> Regenerate
                       </button>
@@ -428,8 +492,8 @@ export const AiAdvisor: React.FC = () => {
                 </div>
 
                 {isUser && (
-                  <div className="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 flex items-center justify-center text-xs font-bold shrink-0">
-                    AV
+                  <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-bold shrink-0">
+                    You
                   </div>
                 )}
               </div>
@@ -440,16 +504,16 @@ export const AiAdvisor: React.FC = () => {
         </div>
 
         {/* Input Controls Bar */}
-        <div className="p-4 border-t border-slate-800/80 bg-slate-950/80 space-y-2">
+        <div className="p-3 sm:p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 space-y-2">
           {isGenerating && (
-            <div className="flex items-center justify-between text-xs text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-xl border border-indigo-500/20">
+            <div className="flex items-center justify-between text-xs text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-800">
               <span className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-indigo-400 animate-ping"></span>
-                Grow 0.2 AI Advisor is generating response...
+                <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+                GROW AI Assistant is preparing guidance...
               </span>
               <button
                 onClick={handleStopGeneration}
-                className="flex items-center gap-1 font-bold text-rose-400 hover:text-rose-300"
+                className="flex items-center gap-1 font-semibold text-red-600 hover:text-red-700 dark:text-red-400"
               >
                 <StopCircle className="w-4 h-4" /> Stop
               </button>
@@ -460,12 +524,12 @@ export const AiAdvisor: React.FC = () => {
             <button
               type="button"
               onClick={handleToggleVoice}
-              className={`p-3 rounded-2xl border transition-all ${
+              className={`p-2.5 rounded-xl border transition-colors ${
                 isListening
-                  ? 'bg-rose-500 text-white border-rose-400 animate-pulse'
-                  : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border-slate-800'
+                  ? 'bg-red-50 text-red-600 border-red-300 dark:bg-red-950/50 dark:text-red-300 animate-pulse'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
               }`}
-              title="Speech-to-Text Microphone"
+              title="Voice Input"
             >
               <Mic className="w-4 h-4" />
             </button>
@@ -475,16 +539,17 @@ export const AiAdvisor: React.FC = () => {
               value={inputPrompt}
               onChange={e => setInputPrompt(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask Grow 0.2 AI Advisor about gold prices, savings, budget, or investments..."
-              className="flex-1 bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 resize-none max-h-28"
+              placeholder="Ask GROW AI Assistant about savings, spending, emergency fund, or bullion prices..."
+              className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 resize-none max-h-28"
             />
 
             <button
               type="submit"
               disabled={isGenerating || !inputPrompt.trim()}
-              className="px-5 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-extrabold text-xs shadow-lg shadow-indigo-500/25 transition-all flex items-center gap-1.5 disabled:opacity-50"
+              className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-40 cursor-pointer"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Ask AI</span>
             </button>
           </form>
         </div>

@@ -2,72 +2,166 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+/* ==========================================================================
+   GROW 0.2 — PSYCHOLOGY-BASED FINTECH DESIGN SYSTEM
+   - Blue (#2563EB)     → Trust, reliability, security & primary navigation
+   - Green (#10B981)    → Financial growth, positive progress, savings, success
+   - Red (#EF4444)      → Actual financial loss, failure, critical danger
+   - Amber (#F59E0B)    → Attention, awareness, upcoming bills, reminders
+   - Purple (#8B5CF6)   → Goals, milestones, wealth achievement
+   - Neutral Light/Dark → Clarity, readability, calm, high contrast
+   ========================================================================== */
+
 :root {
-  --bg-primary: #0b0f19;
-  --bg-secondary: #131b2e;
-  --bg-card: #1a233a;
-  
-  --color-navy: #003366;
-  --color-cyan: #0099cc;
-  --color-ice: #b0c4de;
-  --color-blue: #007bff;
-  --color-green: #28a745;
-  --color-gold: #f0a500;
-  --color-amber: #ffc107;
-  --color-slate-dark: #1e1e2f;
-  --color-slate-indigo: #4a4e69;
+  /* Surface & Neutral Tokens (Light Mode — Clarity & Calm) */
+  --bg-app: #f8fafc;
+  --bg-subtle: #f1f5f9;
+  --surface-card: #ffffff;
+  --surface-secondary: #f8fafc;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --border-subtle: #e2e8f0;
+  --border-divider: #e5e7eb;
+
+  /* Primary Brand: Trust Blue */
+  --color-trust-primary: #2563eb;
+  --color-trust-hover: #1d4ed8;
+  --color-trust-light: #eff6ff;
+  --color-trust-border: #bfdbfe;
+
+  /* Growth Green */
+  --color-growth-primary: #10b981;
+  --color-growth-hover: #059669;
+  --color-growth-light: #ecfdf5;
+  --color-growth-border: #a7f3d0;
+
+  /* Loss Red */
+  --color-loss-primary: #ef4444;
+  --color-loss-hover: #dc2626;
+  --color-loss-light: #fef2f2;
+  --color-loss-border: #fecaca;
+
+  /* Attention Amber */
+  --color-attention-primary: #f59e0b;
+  --color-attention-hover: #d97706;
+  --color-attention-light: #fffbeb;
+  --color-attention-border: #fde68a;
+
+  /* Goal / Wealth Purple */
+  --color-goal-primary: #8b5cf6;
+  --color-goal-hover: #7c3aed;
+  --color-goal-light: #f5f3ff;
+  --color-goal-border: #ddd6fe;
+}
+
+html.dark {
+  /* Surface & Neutral Tokens (Dark Mode — Professional Charcoal) */
+  --bg-app: #0f172a;
+  --bg-subtle: #1e293b;
+  --surface-card: #1e293b;
+  --surface-secondary: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --border-subtle: #334155;
+  --border-divider: #334155;
+
+  /* Dark mode semantic overlays */
+  --color-trust-light: rgba(37, 99, 235, 0.15);
+  --color-trust-border: rgba(59, 130, 246, 0.35);
+
+  --color-growth-light: rgba(16, 185, 129, 0.15);
+  --color-growth-border: rgba(16, 185, 129, 0.35);
+
+  --color-loss-light: rgba(239, 68, 68, 0.15);
+  --color-loss-border: rgba(239, 68, 68, 0.35);
+
+  --color-attention-light: rgba(245, 158, 11, 0.15);
+  --color-attention-border: rgba(245, 158, 11, 0.35);
+
+  --color-goal-light: rgba(139, 92, 246, 0.15);
+  --color-goal-border: rgba(139, 92, 246, 0.35);
 }
 
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: #0b0f19;
-  color: #f8fafc;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
   overflow-x: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Money Banking Metallic Background Gradients */
+/* Background canvas */
 .bg-money-banking {
-  background: radial-gradient(circle at 20% 20%, rgba(0, 51, 102, 0.45) 0%, transparent 40%),
-              radial-gradient(circle at 80% 80%, rgba(240, 165, 0, 0.15) 0%, transparent 40%),
-              radial-gradient(circle at 50% 50%, rgba(40, 167, 69, 0.12) 0%, transparent 50%),
-              #0b0f19;
+  background-color: var(--bg-app);
 }
 
-/* Glassmorphism Panel with Gold/Cyan Banking Borders */
+/* Card System: Clean, safe, structured, readable */
 .glass-panel {
-  background: rgba(19, 27, 46, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(176, 196, 222, 0.15);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dark .glass-panel {
+  background-color: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
 }
 
 .glass-card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-card-hover:hover {
   transform: translateY(-2px);
-  border-color: rgba(240, 165, 0, 0.4);
-  box-shadow: 0 12px 30px -10px rgba(240, 165, 0, 0.25);
+  border-color: var(--color-trust-border);
+  box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.1);
 }
 
-/* Gradient Text Utilities */
-.gradient-text-gold {
-  background: linear-gradient(135deg, #ffc107 0%, #f0a500 50%, #e67e22 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+/* Semantic Badges */
+.badge-trust {
+  background-color: var(--color-trust-light);
+  color: var(--color-trust-primary);
+  border: 1px solid var(--color-trust-border);
 }
 
+.badge-growth {
+  background-color: var(--color-growth-light);
+  color: var(--color-growth-primary);
+  border: 1px solid var(--color-growth-border);
+}
+
+.badge-loss {
+  background-color: var(--color-loss-light);
+  color: var(--color-loss-primary);
+  border: 1px solid var(--color-loss-border);
+}
+
+.badge-attention {
+  background-color: var(--color-attention-light);
+  color: var(--color-attention-primary);
+  border: 1px solid var(--color-attention-border);
+}
+
+.badge-goal {
+  background-color: var(--color-goal-light);
+  color: var(--color-goal-primary);
+  border: 1px solid var(--color-goal-border);
+}
+
+/* Clean Gradient Utilities for accents only */
 .gradient-text-blue {
-  background: linear-gradient(135deg, #0099cc 0%, #007bff 50%, #4a4e69 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .gradient-text-green {
-  background: linear-gradient(135deg, #28a745 0%, #0099cc 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -79,19 +173,19 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0b0f19;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1a233a;
+  background: var(--border-subtle);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #f0a500;
+  background: var(--text-muted);
 }
 
-/* Safe area padding for mobile notches / home bars */
+/* Safe area padding for mobile navigation */
 .safe-area-bottom {
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }
