@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
-  ShieldAlert, Users, Server, Radio, FileText, Activity, CheckCircle, AlertTriangle, Key, Plus
+  ShieldAlert, Users, Server, Radio, FileText, Activity, CheckCircle, AlertTriangle, Key, Plus, X
 } from 'lucide-react';
 import { AuditLog } from '../types';
 
-export const AdminPanel: React.FC = () => {
+interface AdminPanelProps {
+  onExit?: () => void;
+}
+
+export const AdminPanel: React.FC<AdminPanelProps> = ({ onExit }) => {
   const { user } = useApp();
   const [activeAdminSubTab, setActiveAdminSubTab] = useState<'users' | 'apis' | 'logs' | 'broadcast'>('users');
   const [broadcastMsg, setBroadcastMsg] = useState('');
@@ -53,6 +57,16 @@ export const AdminPanel: React.FC = () => {
           </h1>
           <p className="text-xs text-slate-400">Manage application platform users, monitor live API rate limits, audit logs, and broadcast announcements.</p>
         </div>
+
+        {onExit && (
+          <button 
+            onClick={onExit}
+            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 transition-colors self-start sm:self-center"
+            title="Exit to Dashboard"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Sub Tabs */}

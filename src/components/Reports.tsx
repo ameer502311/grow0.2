@@ -1,8 +1,12 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { PieChart, BarChart2, TrendingUp, DollarSign, Download, Filter } from 'lucide-react';
+import { PieChart, BarChart2, TrendingUp, DollarSign, Download, Filter, X } from 'lucide-react';
 
-export const Reports: React.FC = () => {
+interface ReportsProps {
+  onExit?: () => void;
+}
+
+export const Reports: React.FC<ReportsProps> = ({ onExit }) => {
   const { expenses, incomes, investments, currencySymbol } = useApp();
 
   // Aggregate Category Expense Totals
@@ -17,11 +21,23 @@ export const Reports: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Banner */}
-      <div className="glass-panel rounded-3xl p-5 bg-slate-900/60 border-slate-800">
-        <h1 className="text-xl font-extrabold text-white flex items-center gap-2">
-          <PieChart className="w-5 h-5 text-emerald-400" /> Reports & Financial Analytics
-        </h1>
-        <p className="text-xs text-slate-400">Deep visual analytics on expense breakdown, income streams, cash flows, and investment ROI.</p>
+      <div className="card-surface rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <PieChart className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Reports & Financial Analytics
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Deep visual analytics on expense breakdown, income streams, cash flows, and investment ROI.</p>
+        </div>
+
+        {onExit && (
+          <button 
+            onClick={onExit}
+            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+            title="Exit to Dashboard"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Grid Charts */}

@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { 
   Sparkles, Send, Mic, Key, RefreshCw, 
   Bot, Copy, RotateCcw, Plus, StopCircle, Check,
-  TrendingUp, AlertTriangle, AlertCircle, Info, Target, CheckCircle2
+  TrendingUp, AlertTriangle, AlertCircle, Info, Target, CheckCircle2, X
 } from 'lucide-react';
 import { streamOpenAiChat, fetchMarketPrices } from '../services/api';
 
@@ -31,7 +31,11 @@ interface MarketPrices {
   updated_at: string;
 }
 
-export const AiAdvisor: React.FC = () => {
+interface AiAdvisorProps {
+  onExit?: () => void;
+}
+
+export const AiAdvisor: React.FC<AiAdvisorProps> = ({ onExit }) => {
   const { user, setUser } = useApp();
 
   const [conversationId, setConversationId] = useState<string>(`conv-${Date.now()}`);
@@ -408,6 +412,16 @@ export const AiAdvisor: React.FC = () => {
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
+
+            {onExit && (
+              <button
+                onClick={onExit}
+                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors"
+                title="Exit to Dashboard"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
 

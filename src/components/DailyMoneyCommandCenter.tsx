@@ -3,11 +3,15 @@ import {
   Wallet, DollarSign, ArrowUpRight, ArrowDownRight, RefreshCw, Bell, 
   Plus, Mic, Upload, Search, CheckCircle, Clock, AlertTriangle, 
   Sparkles, Calendar, ShieldCheck, PieChart, TrendingUp, CreditCard, 
-  ChevronRight, HeartPulse, Lock, Zap, MessageSquare, Send, Share2, Trash2, Edit3, Calculator
+  ChevronRight, HeartPulse, Lock, Zap, MessageSquare, Send, Share2, Trash2, Edit3, Calculator, X
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
-export const DailyMoneyCommandCenter: React.FC = () => {
+interface DailyMoneyCommandCenterProps {
+  onExit?: () => void;
+}
+
+export const DailyMoneyCommandCenter: React.FC<DailyMoneyCommandCenterProps> = ({ onExit }) => {
   const { user } = useApp();
   const getTodayStr = () => new Date().toISOString().slice(0, 10);
 
@@ -249,6 +253,16 @@ export const DailyMoneyCommandCenter: React.FC = () => {
             <Bell className="w-4 h-4 text-cyan-400" />
             <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 animate-ping" />
           </button>
+
+          {onExit && (
+            <button 
+              onClick={onExit}
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 transition-all"
+              title="Exit to Dashboard"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -736,9 +750,14 @@ export const DailyMoneyCommandCenter: React.FC = () => {
       {shareTextModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="glass-panel rounded-3xl p-6 bg-slate-900 border-slate-800 max-w-md w-full space-y-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Share2 className="w-4 h-4 text-cyan-400" /> Share Manual Reminder
-            </h3>
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Share2 className="w-4 h-4 text-cyan-400" /> Share Manual Reminder
+              </h3>
+              <button onClick={() => setShareTextModal(null)} className="p-1 text-slate-400 hover:text-white" title="Exit / Close">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
             <p className="text-xs text-slate-400">Copy or share text directly with your contact:</p>
             <textarea 
               readOnly 
@@ -864,7 +883,12 @@ export const DailyMoneyCommandCenter: React.FC = () => {
       {showAddTxModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="glass-panel rounded-3xl p-6 bg-slate-900 border-slate-800 max-w-md w-full space-y-4">
-            <h3 className="text-sm font-bold text-white">Add {showAddTxModal === 'INCOME' ? 'Income' : 'Expense'}</h3>
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-white">Add {showAddTxModal === 'INCOME' ? 'Income' : 'Expense'}</h3>
+              <button onClick={() => setShowAddTxModal(null)} className="p-1 text-slate-400 hover:text-white" title="Exit / Close">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
             <form onSubmit={handleAddTransaction} className="space-y-3 text-xs">
               <div>
                 <label className="block text-slate-400 mb-1">Amount (₹)</label>
@@ -923,9 +947,14 @@ export const DailyMoneyCommandCenter: React.FC = () => {
       {showVoiceModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="glass-panel rounded-3xl p-6 bg-slate-900 border-slate-800 max-w-md w-full space-y-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Mic className="w-4 h-4 text-indigo-400" /> Voice-Style Expense Converter
-            </h3>
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Mic className="w-4 h-4 text-indigo-400" /> Voice-Style Expense Converter
+              </h3>
+              <button onClick={() => setShowVoiceModal(false)} className="p-1 text-slate-400 hover:text-white" title="Exit / Close">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
             <p className="text-xs text-slate-400">Speak or type voice command e.g. "I spent 250 rupees for lunch"</p>
 
             <input 

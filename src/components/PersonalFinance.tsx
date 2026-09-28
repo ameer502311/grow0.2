@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   Plus, Search, Download, Trash2, Target, 
-  PiggyBank, ArrowUpRight, AlertTriangle, Calendar, Wallet, CreditCard, TrendingUp, CheckCircle2
+  PiggyBank, ArrowUpRight, AlertTriangle, Calendar, Wallet, CreditCard, TrendingUp, CheckCircle2, X
 } from 'lucide-react';
 import { IncomeCategory, ExpenseCategory } from '../types';
 
 interface PersonalFinanceProps {
   onOpenAddModal: (type: 'income' | 'expense') => void;
+  onExit?: () => void;
 }
 
-export const PersonalFinance: React.FC<PersonalFinanceProps> = ({ onOpenAddModal }) => {
+export const PersonalFinance: React.FC<PersonalFinanceProps> = ({ onOpenAddModal, onExit }) => {
   const { 
     currencySymbol, incomes = [], expenses = [], budgets = [], savingsGoals = [], 
     deleteIncome, deleteExpense, updateBudget, addSavingsGoal, depositSavingsGoal 
@@ -119,6 +120,15 @@ export const PersonalFinance: React.FC<PersonalFinanceProps> = ({ onOpenAddModal
           >
             <Plus className="w-4 h-4" /> Add Income
           </button>
+          {onExit && (
+            <button 
+              onClick={onExit}
+              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+              title="Exit to Dashboard"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -468,7 +478,16 @@ export const PersonalFinance: React.FC<PersonalFinanceProps> = ({ onOpenAddModal
       {showGoalModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="card-surface rounded-2xl p-6 border border-slate-200 dark:border-slate-800 max-w-md w-full space-y-4 shadow-xl">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Create New Savings Goal</h2>
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Create New Savings Goal</h2>
+              <button 
+                onClick={() => setShowGoalModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                title="Exit / Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
             <form onSubmit={handleCreateGoal} className="space-y-3 text-xs">
               <div>
                 <label className="block text-slate-700 dark:text-slate-300 font-medium mb-1">Goal Title</label>
@@ -542,7 +561,16 @@ export const PersonalFinance: React.FC<PersonalFinanceProps> = ({ onOpenAddModal
       {depositGoalId && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="card-surface rounded-2xl p-6 border border-slate-200 dark:border-slate-800 max-w-sm w-full space-y-4 shadow-xl">
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Deposit Funds to Goal</h2>
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Deposit Funds to Goal</h2>
+              <button 
+                onClick={() => setDepositGoalId(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                title="Exit / Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
             <form onSubmit={handleDeposit} className="space-y-3 text-xs">
               <div>
                 <label className="block text-slate-700 dark:text-slate-300 font-medium mb-1">Deposit Amount ({currencySymbol})</label>

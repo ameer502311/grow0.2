@@ -21,6 +21,7 @@ import { fetchAiRebalanceInsights } from '../services/portfolioApi';
 
 export interface PlatformIntegrationsProps {
   onOpenPayment?: (amount?: number, purpose?: PaymentTransaction['purpose']) => void;
+  onExit?: () => void;
 }
 
 export interface RealPlatform {
@@ -40,7 +41,7 @@ export interface RealPlatform {
   lastSyncedAt: string | null;
 }
 
-export const PlatformIntegrations: React.FC<PlatformIntegrationsProps> = ({ onOpenPayment }) => {
+export const PlatformIntegrations: React.FC<PlatformIntegrationsProps> = ({ onOpenPayment, onExit }) => {
   const { buyDigitalGold, tickers, currencySymbol, transactions } = useApp();
 
   const [realPlatforms, setRealPlatforms] = useState<RealPlatform[]>([]);
@@ -282,6 +283,15 @@ export const PlatformIntegrations: React.FC<PlatformIntegrationsProps> = ({ onOp
           >
             <RefreshCw className={`w-4 h-4 ${syncingPlatformId ? 'animate-spin' : ''}`} /> Refresh All
           </button>
+          {onExit && (
+            <button
+              onClick={onExit}
+              className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 text-xs font-bold transition-all"
+              title="Exit to Dashboard"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 

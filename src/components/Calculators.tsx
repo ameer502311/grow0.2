@@ -2,13 +2,17 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   Calculator as CalcIcon, TrendingUp, PiggyBank, DollarSign, 
-  Sparkles, Layers, ShieldCheck, RefreshCw
+  Sparkles, Layers, ShieldCheck, RefreshCw, X
 } from 'lucide-react';
 import { calculateSIP, calculateFD, calculateEMI, calculateRetirement, calculateInflation, calculateCAGR } from '../utils/calculators';
 
 type CalcType = 'sip' | 'fd' | 'emi' | 'cagr' | 'retirement' | 'inflation';
 
-export const Calculators: React.FC = () => {
+interface CalculatorsProps {
+  onExit?: () => void;
+}
+
+export const Calculators: React.FC<CalculatorsProps> = ({ onExit }) => {
   const { currencySymbol } = useApp();
   const [activeCalc, setActiveCalc] = useState<CalcType>('sip');
 
@@ -52,11 +56,23 @@ export const Calculators: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Banner */}
-      <div className="glass-panel rounded-3xl p-5 bg-slate-900/60 border-slate-800">
-        <h1 className="text-xl font-extrabold text-white flex items-center gap-2">
-          <CalcIcon className="w-5 h-5 text-emerald-400" /> Smart Financial Calculators Suite
-        </h1>
-        <p className="text-xs text-slate-400 mt-0.5">Calculate investment wealth compounding, SIP returns, loan EMIs, retirement corpus & inflation impact.</p>
+      <div className="card-surface rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <CalcIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Smart Financial Calculators
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Calculate investment wealth compounding, SIP returns, loan EMIs, retirement corpus & inflation impact.</p>
+        </div>
+
+        {onExit && (
+          <button 
+            onClick={onExit}
+            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+            title="Exit to Dashboard"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Calculator Type Selector */}

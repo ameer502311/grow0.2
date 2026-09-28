@@ -18,6 +18,7 @@ import { SmartBillCenter } from './components/SmartBillCenter';
 import { AuthModal } from './components/AuthModal';
 import { SmartFeaturesModal } from './components/SmartFeaturesModal';
 import { PaymentGatewayModal } from './components/PaymentGatewayModal';
+import { X, ArrowLeft } from 'lucide-react';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -44,8 +45,8 @@ class ViewErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="glass-panel rounded-3xl p-8 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-center space-y-4 my-6">
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto text-xl font-black border border-amber-200 dark:border-amber-800/60">
+        <div className="card-surface rounded-2xl p-8 border border-slate-200 dark:border-slate-800 text-center space-y-4 my-6">
+          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto text-xl font-black border border-amber-200 dark:border-amber-800/60">
             ⚠️
           </div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">View Recovered</h2>
@@ -67,7 +68,7 @@ class ViewErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
 }
 
 export const App: React.FC = () => {
-  const { user, addIncome, addExpense } = useApp();
+  const { addIncome, addExpense } = useApp();
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
@@ -115,6 +116,30 @@ export const App: React.FC = () => {
     setShowQuickAddModal(null);
   };
 
+  const handleExitToDashboard = () => {
+    setActiveTab('dashboard');
+  };
+
+  const getPageTitle = (tab: ActiveTab) => {
+    switch (tab) {
+      case 'personal_finance':
+      case 'finance': return 'Personal Finance & Cash Flow';
+      case 'smart_bills': return 'Pay Bills & Recharge';
+      case 'investments': return 'Investments & Markets';
+      case 'platforms':
+      case 'integrations': return 'Platform Integrations';
+      case 'calculators': return 'Financial Calculators';
+      case 'ai': return 'GROW AI Assistant';
+      case 'news':
+      case 'daily_command_center': return 'Daily Money Command Center';
+      case 'market_news': return 'Market News';
+      case 'loans': return 'Loans & EMI Schedule';
+      case 'reports': return 'Reports & Analytics';
+      case 'admin': return 'Admin Panel';
+      default: return 'Financial Overview';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-blue-500/20 selection:text-blue-900 dark:selection:text-blue-200">
       {/* Header */}
@@ -137,6 +162,33 @@ export const App: React.FC = () => {
 
         {/* Tab View Router */}
         <main className="flex-1 min-w-0">
+          {/* Universal Exit Mark Header for all non-dashboard pages */}
+          {activeTab !== 'dashboard' && (
+            <div className="flex items-center justify-between mb-4 bg-white dark:bg-slate-850 px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all">
+              <button
+                onClick={handleExitToDashboard}
+                className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 transition-colors cursor-pointer group"
+                title="Return to Dashboard"
+              >
+                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                <span>Back to Dashboard</span>
+                <span className="hidden sm:inline text-slate-300 dark:text-slate-600">|</span>
+                <span className="hidden sm:inline text-slate-500 dark:text-slate-400 font-normal">
+                  {getPageTitle(activeTab)}
+                </span>
+              </button>
+
+              <button
+                onClick={handleExitToDashboard}
+                className="p-1.5 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
+                title="Exit Page to Dashboard"
+              >
+                <span>Exit</span>
+                <X className="w-4 h-4 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white" />
+              </button>
+            </div>
+          )}
+
           <ViewErrorBoundary key={activeTab}>
             {activeTab === 'dashboard' && (
               <Dashboard 
@@ -147,34 +199,60 @@ export const App: React.FC = () => {
             )}
 
             {(activeTab === 'personal_finance' || activeTab === 'finance') && (
-              <PersonalFinance onOpenAddModal={(type: 'income' | 'expense') => setShowQuickAddModal(type)} />
+              <PersonalFinance 
+                onOpenAddModal={(type: 'income' | 'expense') => setShowQuickAddModal(type)} 
+                onExit={handleExitToDashboard}
+              />
             )}
 
-            {activeTab === 'smart_bills' && <SmartBillCenter />}
+            {activeTab === 'smart_bills' && (
+              <SmartBillCenter onExit={handleExitToDashboard} />
+            )}
 
             {activeTab === 'investments' && (
-              <Investments onOpenBuyGold={(amt: number) => handleOpenPayment(amt, 'Digital Gold Buy')} />
+              <Investments 
+                onOpenBuyGold={(amt: number) => handleOpenPayment(amt, 'Digital Gold Buy')} 
+                onExit={handleExitToDashboard}
+              />
             )}
 
             {(activeTab === 'platforms' || activeTab === 'integrations') && (
-              <PlatformIntegrations onOpenPayment={(amt?: number, purp?: PaymentTransaction['purpose']) => handleOpenPayment(amt, purp)} />
+              <PlatformIntegrations 
+                onOpenPayment={(amt?: number, purp?: PaymentTransaction['purpose']) => handleOpenPayment(amt, purp)} 
+                onExit={handleExitToDashboard}
+              />
             )}
 
-            {activeTab === 'calculators' && <Calculators />}
+            {activeTab === 'calculators' && (
+              <Calculators onExit={handleExitToDashboard} />
+            )}
 
-            {activeTab === 'ai' && <AiAdvisor />}
+            {activeTab === 'ai' && (
+              <AiAdvisor onExit={handleExitToDashboard} />
+            )}
 
-            {(activeTab === 'news' || activeTab === 'daily_command_center') && <DailyMoneyCommandCenter />}
+            {(activeTab === 'news' || activeTab === 'daily_command_center') && (
+              <DailyMoneyCommandCenter onExit={handleExitToDashboard} />
+            )}
 
-            {activeTab === 'market_news' && <NewsFeed />}
+            {activeTab === 'market_news' && (
+              <NewsFeed onExit={handleExitToDashboard} />
+            )}
 
             {activeTab === 'loans' && (
-              <EmiManager onOpenPayment={(amt?: number, purp?: PaymentTransaction['purpose']) => handleOpenPayment(amt, purp)} />
+              <EmiManager 
+                onOpenPayment={(amt?: number, purp?: PaymentTransaction['purpose']) => handleOpenPayment(amt, purp)} 
+                onExit={handleExitToDashboard}
+              />
             )}
 
-            {activeTab === 'reports' && <Reports />}
+            {activeTab === 'reports' && (
+              <Reports onExit={handleExitToDashboard} />
+            )}
 
-            {activeTab === 'admin' && <AdminPanel />}
+            {activeTab === 'admin' && (
+              <AdminPanel onExit={handleExitToDashboard} />
+            )}
           </ViewErrorBoundary>
         </main>
       </div>
@@ -190,16 +268,26 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* Quick Add Income/Expense Modal */}
+      {/* Quick Add Income/Expense Modal with prominent Exit [X] Mark */}
       {showQuickAddModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass-panel rounded-3xl p-6 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 max-w-md w-full space-y-4 shadow-xl">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white capitalize flex items-center gap-2">
-              <span className={showQuickAddModal === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}>
-                {showQuickAddModal === 'income' ? '+' : '-'}
-              </span>
-              Add Quick {showQuickAddModal}
-            </h3>
+          <div className="card-surface rounded-2xl p-6 border border-slate-200 dark:border-slate-800 max-w-md w-full space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white capitalize flex items-center gap-2">
+                <span className={showQuickAddModal === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}>
+                  {showQuickAddModal === 'income' ? '+' : '-'}
+                </span>
+                Add Quick {showQuickAddModal}
+              </h3>
+              <button 
+                onClick={() => setShowQuickAddModal(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                title="Exit / Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
             <form onSubmit={handleQuickAddSubmit} className="space-y-3 text-xs">
               <div>
                 <label className="block text-slate-600 dark:text-slate-400 mb-1 font-semibold">Amount</label>
