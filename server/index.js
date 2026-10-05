@@ -3,6 +3,8 @@ import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import mongoose from 'mongoose';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { createFinancialRouter } from './routes/financial.js';
 import { createBillRouter } from './routes/billRoutes.js';
 import { createWebhookRouter } from './routes/webhookRoutes.js';
@@ -209,6 +211,20 @@ app.use('/api/future-finance', futureFinanceRouter);
 // Start Automated Smart Financial Scheduler & Live Market Scheduler
 startScheduler(memoryStore, io);
 startMarketScheduler(io);
+
+// Turnkey Production Hosting: Serve static React build assets & SPA fallback
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const distPath = path.join(__dirname, '../dist');
+
+app.use(express.static(distPath));
+
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) {
+    return next();
+  }
+  res.sendFile(path.join(distPath, 'index.html'));
+});
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
