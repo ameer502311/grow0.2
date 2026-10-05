@@ -17,6 +17,7 @@ export type ActiveTab =
   | 'integrations' 
   | 'platforms' 
   | 'smart_bills'
+  | 'future_finance'
   | 'admin';
 
 export interface UserProfile {
@@ -335,6 +336,158 @@ export interface BillReceiptData {
   transactionDate: string;
   customerName: string;
   disclaimer: string;
+}
+
+// ==========================================
+// AI FINANCIAL FUTURE SIMULATOR & RISK PREDICTOR TYPES
+// ==========================================
+
+export type FutureFinanceScenarioType = 
+  | 'BASELINE' 
+  | 'SALARY_REDUCTION' 
+  | 'JOB_LOSS' 
+  | 'EXPENSE_INCREASE' 
+  | 'UNEXPECTED_EXPENSE' 
+  | 'INVESTMENT_CHANGE' 
+  | 'SALARY_INCREASE' 
+  | 'CUSTOM';
+
+export type RiskLevelType = 'LOW RISK' | 'MODERATE RISK' | 'HIGH RISK' | 'CRITICAL ATTENTION';
+
+export interface FinancialTrendsMatrix {
+  income: string;
+  expenses: string;
+  savings: string;
+  investments: string;
+  debt: string;
+  emergencyFund: string;
+  goalProgress: string;
+  overallPosition: string;
+}
+
+export interface ForecastPeriodData {
+  periodKey: '1M' | '3M' | '6M' | '1Y' | '3Y' | '5Y';
+  label: string;
+  months: number;
+  expectedIncome: number;
+  expectedExpenses: number;
+  netSavingsAdded: number;
+  estimatedInvestmentValue: number;
+  emergencyFundStatus: number;
+  remainingDebt: number;
+  goalCompletionPct: number;
+  stabilityScore: number;
+  assumptions: string[];
+}
+
+export interface ComparisonMetricItem {
+  metric: string;
+  currentPlan: string;
+  whatIfPlan: string;
+  delta: number;
+  status: 'positive' | 'warning' | 'negative';
+}
+
+export interface SurplusAllocationPlan {
+  monthlyHikeAmount: number;
+  emergencyReserve: number;
+  wealthInvestments: number;
+  goalAcceleration: number;
+  lifestyleDiscretionary: number;
+}
+
+export interface FutureFinanceBaseline {
+  user: {
+    id: string;
+    name: string;
+    currency: string;
+  };
+  income: {
+    primarySalary: number;
+    otherIncome: number;
+    totalMonthlyIncome: number;
+    trend: string;
+  };
+  expenses: {
+    totalMonthlyExpenses: number;
+    essentialExpenses: number;
+    nonEssentialExpenses: number;
+    essentialRatio: number;
+    categoryBreakdown: Record<string, number>;
+  };
+  debt: {
+    totalMonthlyEmi: number;
+    totalOutstandingDebt: number;
+    debtToIncomeRatio: number;
+    loansCount: number;
+  };
+  savings: {
+    monthlySavings: number;
+    savingsRate: number;
+    availableEmergencySavings: number;
+    monthlyEssentialBurn: number;
+    emergencyFundCoverageMonths: number;
+    recommendedTargetMonths: number;
+  };
+  investments: {
+    totalInvestmentValue: number;
+    monthlySipContribution: number;
+    categories: Record<string, number>;
+  };
+  goals: {
+    id: string;
+    title: string;
+    targetAmount: number;
+    currentAmount: number;
+    remainingAmount: number;
+    progressPct: number;
+    category: string;
+    targetDate?: string;
+    estimatedEtaMonths: number;
+  }[];
+  riskLevel: RiskLevelType;
+  riskScore: number;
+  riskSummary: string;
+  financialTrends: FinancialTrendsMatrix;
+  timestamp: string;
+}
+
+export interface FutureFinanceSimulationResult {
+  scenarioType: FutureFinanceScenarioType;
+  params: Record<string, any>;
+  description: string;
+  keyMetric: {
+    label: string;
+    value: string;
+  };
+  metrics: {
+    monthlyIncome: number;
+    monthlyExpenses: number;
+    monthlySavings: number;
+    savingsRate: number;
+    emergencySavings: number;
+    emergencyCoverageMonths: number;
+    debtToIncomeRatio: number;
+    monthlySip: number;
+    cashBurnRate: number;
+    surplusAllocation?: SurplusAllocationPlan | null;
+  };
+  risk: {
+    level: RiskLevelType;
+    score: number;
+    color: string;
+    description: string;
+  };
+  trends: FinancialTrendsMatrix;
+  forecasts: ForecastPeriodData[];
+  comparison: ComparisonMetricItem[];
+  aiExplanation?: {
+    summary: string;
+    goingWell: string[];
+    concerning: string[];
+    mayHappen: string[];
+    actions: string[];
+  };
 }
 
 

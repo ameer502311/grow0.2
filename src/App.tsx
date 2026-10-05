@@ -15,6 +15,7 @@ import { Reports } from './components/Reports';
 import { PlatformIntegrations } from './components/PlatformIntegrations';
 import { AdminPanel } from './components/AdminPanel';
 import { SmartBillCenter } from './components/SmartBillCenter';
+import { FutureFinanceSimulator } from './components/FutureFinanceSimulator';
 import { AuthModal } from './components/AuthModal';
 import { SmartFeaturesModal } from './components/SmartFeaturesModal';
 import { PaymentGatewayModal } from './components/PaymentGatewayModal';
@@ -125,6 +126,7 @@ export const App: React.FC = () => {
       case 'personal_finance':
       case 'finance': return 'Personal Finance & Cash Flow';
       case 'smart_bills': return 'Pay Bills & Recharge';
+      case 'future_finance': return 'AI Financial Future Simulator & Risk Predictor';
       case 'investments': return 'Investments & Markets';
       case 'platforms':
       case 'integrations': return 'Platform Integrations';
@@ -207,6 +209,10 @@ export const App: React.FC = () => {
 
             {activeTab === 'smart_bills' && (
               <SmartBillCenter onExit={handleExitToDashboard} />
+            )}
+
+            {activeTab === 'future_finance' && (
+              <FutureFinanceSimulator onExit={handleExitToDashboard} />
             )}
 
             {activeTab === 'investments' && (

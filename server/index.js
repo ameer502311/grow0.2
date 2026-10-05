@@ -13,6 +13,7 @@ import { createIntegrationRouter } from './routes/integrationRoutes.js';
 import { createMarketRouter } from './routes/marketRoutes.js';
 import { createSearchRouter } from './routes/searchRoutes.js';
 import { createDailyMoneyRouter } from './routes/dailyMoneyRoutes.js';
+import { createFutureFinanceRouter } from './routes/futureFinanceRoutes.js';
 import { startScheduler } from './services/scheduler.js';
 import { startMarketScheduler } from './services/market_data/marketScheduler.js';
 
@@ -199,6 +200,11 @@ app.use('/api', createSearchRouter());
 
 // Mount Daily Money Command Center Router
 app.use('/api', createDailyMoneyRouter(memoryStore, io));
+
+// Mount AI Financial Future Simulator & Risk Predictor Router
+const futureFinanceRouter = createFutureFinanceRouter(memoryStore, io);
+app.use('/api/financial-future', futureFinanceRouter);
+app.use('/api/future-finance', futureFinanceRouter);
 
 // Start Automated Smart Financial Scheduler & Live Market Scheduler
 startScheduler(memoryStore, io);

@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   LayoutDashboard, Wallet, TrendingUp, Calculator, Sparkles, 
   Newspaper, CreditCard, PieChart, ShieldAlert, Globe, Zap, Bot,
-  Menu, X
+  Menu, X, Compass
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ActiveTab } from '../types';
@@ -28,6 +28,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'personal_finance', label: 'Personal Finance', icon: Wallet },
     { id: 'smart_bills', label: 'Bills & Recharge', icon: Zap, badge: 'BBPS' },
+    { id: 'future_finance', label: 'Future Finance', icon: Compass, badge: 'AI Sim' },
     { id: 'investments', label: 'Investments & Markets', icon: TrendingUp },
     { id: 'platforms', label: 'Connected Platforms', icon: Globe, badge: 'Verified' },
     { id: 'calculators', label: 'Calculators', icon: Calculator },
