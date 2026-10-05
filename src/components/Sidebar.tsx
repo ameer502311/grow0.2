@@ -28,7 +28,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'personal_finance', label: 'Personal Finance', icon: Wallet },
     { id: 'smart_bills', label: 'Bills & Recharge', icon: Zap, badge: 'BBPS' },
-    { id: 'future_finance', label: 'Future Finance', icon: Compass, badge: 'AI Sim' },
+    { id: 'future_finance', label: 'My Financial Future', icon: Compass, badge: 'Future' },
     { id: 'investments', label: 'Investments & Markets', icon: TrendingUp },
     { id: 'platforms', label: 'Connected Platforms', icon: Globe, badge: 'Verified' },
     { id: 'calculators', label: 'Calculators', icon: Calculator },

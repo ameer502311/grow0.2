@@ -204,17 +204,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <span>AI Risk Engine</span>
           </div>
           <h3 className="text-base font-bold text-white flex items-center gap-2">
-            AI Financial Future Simulator & Risk Predictor
+            My Financial Future
           </h3>
           <p className="text-xs text-blue-200/90 max-w-xl">
-            Simulate "What If" scenarios — salary cuts, sudden job loss runway, unexpected emergency shocks, and compound wealth forecasts before making major life decisions.
+            See how your money may change in the future and prepare for unexpected situations like job changes or emergencies.
           </p>
         </div>
         <button
           onClick={() => setActiveTab('future_finance')}
           className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 shrink-0 cursor-pointer"
         >
-          <span>Run Simulator & Risk Test</span>
+          <span>Check My Future</span>
           <ArrowUpRight className="w-4 h-4" />
         </button>
       </div>

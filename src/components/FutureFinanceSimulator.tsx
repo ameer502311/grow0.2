@@ -4,38 +4,33 @@ import {
   Sparkles, 
   TrendingUp, 
   TrendingDown, 
-  AlertTriangle, 
   Briefcase, 
   DollarSign, 
   Calendar, 
   ArrowRight, 
   CheckCircle2, 
-  HelpCircle, 
   X, 
   RefreshCw, 
-  Percent, 
-  Sliders, 
-  Target, 
-  Zap, 
-  Activity, 
-  Clock, 
+  ChevronDown, 
+  ChevronUp, 
+  AlertTriangle, 
+  HeartHandshake, 
+  PiggyBank, 
   Layers, 
   Info,
-  ChevronRight,
-  ShieldAlert
+  Clock,
+  Compass
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { 
   FutureFinanceBaseline, 
   FutureFinanceSimulationResult, 
   FutureFinanceScenarioType,
-  ForecastPeriodData,
-  RiskLevelType
+  ForecastPeriodData 
 } from '../types';
 import { 
   fetchFutureFinanceOverview, 
-  runFutureFinanceSimulation, 
-  saveFutureFinanceScenario 
+  runFutureFinanceSimulation 
 } from '../services/futureFinanceApi';
 
 interface FutureFinanceSimulatorProps {
@@ -58,10 +53,9 @@ export const FutureFinanceSimulator: React.FC<FutureFinanceSimulatorProps> = ({ 
   const [customSipAmt, setCustomSipAmt] = useState<number>(15000);
   const [salaryHikePct, setSalaryHikePct] = useState<number>(15);
 
-  // Timeline view period and toggle
-  const [selectedPeriod, setSelectedPeriod] = useState<'1M' | '3M' | '6M' | '1Y' | '3Y' | '5Y'>('1Y');
-  const [showWhatIfInTimeline, setShowWhatIfInTimeline] = useState<boolean>(true);
-  const [saveSuccessNotice, setSaveSuccessNotice] = useState<string | null>(null);
+  // Progressive disclosure controls (keep main page neat & simple)
+  const [showMoreScenarios, setShowMoreScenarios] = useState(false);
+  const [showDetailedOutlook, setShowDetailedOutlook] = useState(false);
 
   // Initial load
   useEffect(() => {
@@ -74,7 +68,6 @@ export const FutureFinanceSimulator: React.FC<FutureFinanceSimulatorProps> = ({ 
     if (data) {
       setBaseline(data);
       setCustomSipAmt(data.investments.monthlySipContribution || 15000);
-      // Run baseline simulation by default
       const res = await runFutureFinanceSimulation('BASELINE', {});
       if (res) {
         setSimulation(res.simulation);
@@ -83,7 +76,7 @@ export const FutureFinanceSimulator: React.FC<FutureFinanceSimulatorProps> = ({ 
     setLoading(false);
   };
 
-  const executeSimulation = async (scenarioType: FutureFinanceScenarioType, customParams?: Record<string, any>) => {
+  const handleSelectScenario = async (scenarioType: FutureFinanceScenarioType, customParams?: Record<string, any>) => {
     setSimulating(true);
     setActiveScenario(scenarioType);
 
@@ -109,321 +102,397 @@ export const FutureFinanceSimulator: React.FC<FutureFinanceSimulatorProps> = ({ 
     setSimulating(false);
   };
 
-  const handleSaveSimulation = async () => {
-    if (!simulation) return;
-    const success = await saveFutureFinanceScenario({
-      scenarioType: simulation.scenarioType,
-      scenarioInput: simulation.params,
-      simulationData: simulation
-    });
-    if (success) {
-      setSaveSuccessNotice('Simulation snapshot saved successfully.');
-      setTimeout(() => setSaveSuccessNotice(null), 3000);
-    }
-  };
-
   if (loading || !baseline) {
     return (
-      <div className="card-surface rounded-2xl p-12 text-center border border-slate-200 dark:border-slate-800 space-y-4">
-        <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center mx-auto animate-spin">
-          <Activity className="w-6 h-6" />
+      <div className="card-surface rounded-2xl p-12 text-center border border-slate-200 dark:border-slate-800 space-y-3">
+        <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center mx-auto animate-spin">
+          <Compass className="w-5 h-5" />
         </div>
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Analyzing Financial Trajectory...</h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-          Gathering income streams, essential expenses, active loans, and liquid emergency reserves to build your future simulation.
+        <h3 className="text-base font-bold text-slate-900 dark:text-white">Loading your financial picture...</h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Gathering your current savings, expenses, and investments.
         </p>
       </div>
     );
   }
 
-  // Active metrics to display (if simulation is active, show simulation metrics; otherwise baseline)
-  const isSimulationActive = activeScenario !== 'BASELINE' && simulation;
-  const currentRisk = simulation ? simulation.risk : {
-    level: baseline.riskLevel,
-    score: baseline.riskScore,
-    color: baseline.riskLevel === 'LOW RISK' ? '#10B981' : baseline.riskLevel === 'MODERATE RISK' ? '#F59E0B' : '#EF4444',
-    description: baseline.riskSummary
-  };
-  const currentTrends = simulation ? simulation.trends : baseline.financialTrends;
-  const currentMetrics = simulation ? simulation.metrics : {
-    monthlyIncome: baseline.income.totalMonthlyIncome,
-    monthlyExpenses: baseline.expenses.totalMonthlyExpenses,
-    monthlySavings: baseline.savings.monthlySavings,
-    savingsRate: baseline.savings.savingsRate,
-    emergencySavings: baseline.savings.availableEmergencySavings,
-    emergencyCoverageMonths: baseline.savings.emergencyFundCoverageMonths,
-    debtToIncomeRatio: baseline.debt.debtToIncomeRatio,
-    monthlySip: baseline.investments.monthlySipContribution,
-    cashBurnRate: 0,
-    surplusAllocation: null
+  // Active metrics
+  const isScenarioActive = activeScenario !== 'BASELINE' && simulation;
+  const currentCoverageMonths = isScenarioActive 
+    ? simulation.metrics.emergencyCoverageMonths 
+    : baseline.savings.emergencyFundCoverageMonths;
+
+  const currentRiskLevel = isScenarioActive ? simulation.risk.level : baseline.riskLevel;
+
+  // Single Simple Overall Status Message
+  const getOverallStatus = () => {
+    if (currentRiskLevel === 'LOW RISK') {
+      return {
+        dot: '🟢',
+        text: 'Your financial position is improving',
+        bg: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200'
+      };
+    } else if (currentRiskLevel === 'MODERATE RISK') {
+      return {
+        dot: '🟡',
+        text: 'Your financial position needs attention',
+        bg: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200'
+      };
+    } else {
+      return {
+        dot: '🔴',
+        text: 'Your financial position is at risk',
+        bg: 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200'
+      };
+    }
   };
 
-  // Find active period data from forecasts
-  const activeForecasts = simulation?.forecasts || [];
-  const selectedPeriodData = activeForecasts.find(f => f.periodKey === selectedPeriod) || activeForecasts[3] || null;
+  const overallStatus = getOverallStatus();
+
+  // Forecast data for 1Y, 3Y, 5Y
+  const forecasts = simulation?.forecasts || [];
+  const forecast1Y = forecasts.find(f => f.periodKey === '1Y') || forecasts[3];
+  const forecast3Y = forecasts.find(f => f.periodKey === '3Y') || forecasts[4];
+  const forecast5Y = forecasts.find(f => f.periodKey === '5Y') || forecasts[5];
+
+  // Essential monthly commitments
+  const essentialMonthlyExpenses = baseline.expenses.essentialExpenses + baseline.debt.totalMonthlyEmi;
 
   return (
-    <div className="space-y-6">
-      {/* 1. Header Banner with Psychology Brand Blue & Exit Marks */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 p-6 sm:p-8 text-white shadow-lg border border-blue-600/30">
-        <div className="absolute right-0 top-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-        
-        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold text-blue-50 border border-white/20">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>Predictive Financial AI</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Real-Time Engine</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              AI Financial Future Simulator
+    <div className="max-w-5xl mx-auto space-y-6 pb-12">
+      {/* ================================================== */}
+      {/* 1. PAGE TITLE & SUBTITLE                           */}
+      {/* ================================================== */}
+      <div className="bg-white dark:bg-slate-850 rounded-2xl p-6 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-sm transition-all">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              My Financial Future
             </h1>
-            <p className="text-sm sm:text-base text-blue-100 max-w-2xl font-medium">
-              Understand your future financial stability before making important decisions.
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 font-medium max-w-2xl">
+              See how your money may change in the future and prepare for unexpected situations.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            {isSimulationActive && (
+          <div className="flex items-center gap-2 self-start sm:self-center">
+            {isScenarioActive && (
               <button
-                onClick={() => executeSimulation('BASELINE')}
-                className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-md text-white text-xs font-bold transition-all flex items-center gap-2 border border-white/20 cursor-pointer shadow-sm"
-                title="Reset simulation to actual financial baseline"
+                onClick={() => handleSelectScenario('BASELINE')}
+                className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Reset to current financial plan"
               >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>Reset to Normal</span>
+                <RefreshCw className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>Reset to Today</span>
               </button>
             )}
 
             {onExit && (
               <button
                 onClick={onExit}
-                className="px-4 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition-all flex items-center gap-2 border border-white/30 cursor-pointer shadow-sm"
-                title="Exit to Dashboard"
+                className="p-2 sm:px-3 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Return to Dashboard"
               >
                 <X className="w-4 h-4" />
-                <span>Exit</span>
+                <span className="hidden sm:inline">Exit</span>
               </button>
             )}
           </div>
         </div>
-
-        {/* Quick Summary Pill Bar inside Banner */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-white/15">
-          <div>
-            <div className="text-[11px] font-semibold text-blue-200 uppercase tracking-wider">Current Monthly Inflow</div>
-            <div className="text-lg sm:text-xl font-bold tracking-tight">
-              ₹{baseline.income.totalMonthlyIncome.toLocaleString()}
-            </div>
-          </div>
-          <div>
-            <div className="text-[11px] font-semibold text-blue-200 uppercase tracking-wider">Monthly Essential Burn</div>
-            <div className="text-lg sm:text-xl font-bold tracking-tight">
-              ₹{(baseline.expenses.essentialExpenses + baseline.debt.totalMonthlyEmi).toLocaleString()}
-            </div>
-          </div>
-          <div>
-            <div className="text-[11px] font-semibold text-blue-200 uppercase tracking-wider">Emergency Runway</div>
-            <div className="text-lg sm:text-xl font-bold tracking-tight text-emerald-300">
-              {baseline.savings.emergencyFundCoverageMonths} Months
-            </div>
-          </div>
-          <div>
-            <div className="text-[11px] font-semibold text-blue-200 uppercase tracking-wider">Current Risk Level</div>
-            <div className="text-lg sm:text-xl font-bold tracking-tight text-amber-200">
-              {baseline.riskLevel}
-            </div>
-          </div>
-        </div>
       </div>
 
-      {saveSuccessNotice && (
-        <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-800 dark:text-emerald-200 text-xs font-semibold flex items-center gap-2 animate-fadeIn">
-          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-          <span>{saveSuccessNotice}</span>
-        </div>
-      )}
-
-      {/* 2. Interactive "What If?" Financial Simulator Controls */}
-      <div className="card-surface rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400">
-                <Sliders className="w-4 h-4" />
-              </span>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">What If? Financial Simulator</h2>
+      {/* ================================================== */}
+      {/* 2. TOP SUMMARY (ONLY 4 IMPORTANT CARDS)            */}
+      {/* ================================================== */}
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {/* Card 1: Savings */}
+          <div className="card-surface rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+              Savings
+            </span>
+            <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
+              ₹{baseline.savings.availableEmergencySavings.toLocaleString()}
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Select a real-world scenario to simulate its impact on your savings, runway, investments, and risk.
-            </p>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 block">
+              Available liquid funds
+            </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500 dark:text-slate-400">Active Scenario:</span>
-            <span className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 font-bold text-xs border border-blue-200 dark:border-blue-800/60">
-              {activeScenario === 'BASELINE' ? 'Normal Plan' : activeScenario.replace(/_/g, ' ')}
+          {/* Card 2: Investments */}
+          <div className="card-surface rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+              Investments
+            </span>
+            <div className="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">
+              ₹{baseline.investments.totalInvestmentValue.toLocaleString()}
+            </div>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 block">
+              Mutual funds, stocks & gold
+            </span>
+          </div>
+
+          {/* Card 3: Monthly Savings */}
+          <div className="card-surface rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+              Monthly Savings
+            </span>
+            <div className={`text-xl sm:text-2xl font-black mt-1 ${
+              baseline.savings.monthlySavings >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+            }`}>
+              ₹{baseline.savings.monthlySavings.toLocaleString()}
+            </div>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 block">
+              Saved every month
+            </span>
+          </div>
+
+          {/* Card 4: Emergency Fund */}
+          <div className="card-surface rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+              Emergency Fund
+            </span>
+            <div className="text-xl sm:text-2xl font-black text-purple-600 dark:text-purple-400 mt-1">
+              {baseline.savings.emergencyFundCoverageMonths} months
+            </div>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 block">
+              Of essential expenses
             </span>
           </div>
         </div>
 
-        {/* 6 Scenario Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
-          {/* Scenario 1: Salary Reduction */}
-          <div 
-            className={`p-4 rounded-xl border transition-all cursor-pointer ${
-              activeScenario === 'SALARY_REDUCTION' 
-                ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 ring-1 ring-blue-500/50' 
-                : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/60 dark:bg-slate-900/40'
-            }`}
-            onClick={() => executeSimulation('SALARY_REDUCTION', { percentage: salaryReductionPct })}
-          >
-            <div className="flex items-start justify-between gap-2">
+        {/* Single simple overall status banner */}
+        <div className={`p-3.5 rounded-xl border flex items-center gap-2.5 text-xs sm:text-sm font-bold shadow-xs ${overallStatus.bg}`}>
+          <span className="text-base">{overallStatus.dot}</span>
+          <span>{overallStatus.text}</span>
+        </div>
+      </div>
+
+      {/* ================================================== */}
+      {/* 3. CAN I HANDLE AN EMERGENCY?                      */}
+      {/* ================================================== */}
+      <div className="card-surface rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+        <div>
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+            Can I Handle an Emergency?
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 font-medium">
+            You can currently cover about <strong className="text-slate-900 dark:text-white font-extrabold">{currentCoverageMonths} months</strong> of essential expenses.
+          </p>
+        </div>
+
+        {/* Clean Progress Bar (0 to 6 months) */}
+        <div className="space-y-1.5 pt-1">
+          <div className="w-full bg-slate-100 dark:bg-slate-800 h-3 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
+            <div 
+              className={`h-full transition-all duration-500 rounded-full ${
+                currentCoverageMonths >= 6 
+                  ? 'bg-emerald-500' 
+                  : currentCoverageMonths >= 3 
+                    ? 'bg-amber-500' 
+                    : 'bg-red-500'
+              }`}
+              style={{ width: `${Math.min(100, Math.max(5, (currentCoverageMonths / 6) * 100))}%` }}
+            />
+          </div>
+
+          <div className="flex justify-between items-center text-xs font-semibold text-slate-500 dark:text-slate-400 pt-0.5">
+            <span>0 months</span>
+            <span className="text-slate-700 dark:text-slate-300 font-bold">
+              Current: {currentCoverageMonths} months
+            </span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+              Recommended: 6 months
+            </span>
+          </div>
+        </div>
+
+        {/* Short explanation */}
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Building your emergency savings toward 6 months can give you more financial safety.
+        </p>
+      </div>
+
+      {/* ================================================== */}
+      {/* 4. WHAT IF SOMETHING HAPPENS?                      */}
+      {/* ================================================== */}
+      <div className="card-surface rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+        <div>
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+            What If Something Happens?
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            Choose a situation to see how it could affect your money.
+          </p>
+        </div>
+
+        {/* 4 Main Scenario Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          {/* Card 1: I Lose My Job */}
+          <div className={`p-4 rounded-xl border transition-all flex flex-col justify-between gap-3 ${
+            activeScenario === 'JOB_LOSS'
+              ? 'border-red-500 bg-red-50/50 dark:bg-red-950/30 ring-1 ring-red-500/50'
+              : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/60 dark:bg-slate-900/40'
+          }`}>
+            <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400">
-                  <TrendingDown className="w-4 h-4" />
-                </span>
-                <span className="text-sm font-bold text-slate-900 dark:text-white">Salary Reduction</span>
+                <span className="text-lg">💼</span>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">I Lose My Job</h3>
               </div>
-              <span className="text-[11px] font-semibold text-slate-500">"What if my salary decreases?"</span>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                See how long my savings may support me.
+              </p>
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
-              Simulate a pay cut or transition to lower compensation.
-            </p>
+            <button
+              onClick={() => handleSelectScenario('JOB_LOSS')}
+              disabled={simulating}
+              className={`w-full py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeScenario === 'JOB_LOSS'
+                  ? 'bg-red-600 text-white shadow-xs'
+                  : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
+            >
+              {activeScenario === 'JOB_LOSS' ? 'Active Scenario' : 'Check'}
+            </button>
+          </div>
 
-            <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          {/* Card 2: My Salary Goes Down */}
+          <div className={`p-4 rounded-xl border transition-all flex flex-col justify-between gap-3 ${
+            activeScenario === 'SALARY_REDUCTION'
+              ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/30 ring-1 ring-amber-500/50'
+              : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/60 dark:bg-slate-900/40'
+          }`}>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📉</span>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">My Salary Goes Down</h3>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                See how lower income may affect my savings.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleSelectScenario('SALARY_REDUCTION', { percentage: salaryReductionPct })}
+                disabled={simulating}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeScenario === 'SALARY_REDUCTION'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
+              >
+                {activeScenario === 'SALARY_REDUCTION' ? `Active (-${salaryReductionPct}%)` : 'Check'}
+              </button>
+              
+              {/* Quick % selector */}
               {[10, 20, 30].map(pct => (
                 <button
                   key={pct}
                   onClick={() => {
                     setSalaryReductionPct(pct);
-                    executeSimulation('SALARY_REDUCTION', { percentage: pct });
+                    handleSelectScenario('SALARY_REDUCTION', { percentage: pct });
                   }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-2 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                     salaryReductionPct === pct && activeScenario === 'SALARY_REDUCTION'
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
                   }`}
                 >
                   -{pct}%
                 </button>
               ))}
-              <span className="text-[11px] text-slate-500">(-₹{Math.round(baseline.income.primarySalary * (salaryReductionPct / 100)).toLocaleString()}/mo)</span>
             </div>
           </div>
 
-          {/* Scenario 2: Job Loss */}
-          <div 
-            className={`p-4 rounded-xl border transition-all cursor-pointer ${
-              activeScenario === 'JOB_LOSS' 
-                ? 'border-red-500 bg-red-50/40 dark:bg-red-950/20 ring-1 ring-red-500/50' 
-                : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/60 dark:bg-slate-900/40'
-            }`}
-            onClick={() => executeSimulation('JOB_LOSS')}
-          >
-            <div className="flex items-start justify-between gap-2">
+          {/* Card 3: My Expenses Go Up */}
+          <div className={`p-4 rounded-xl border transition-all flex flex-col justify-between gap-3 ${
+            activeScenario === 'EXPENSE_INCREASE'
+              ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/30 ring-1 ring-amber-500/50'
+              : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/60 dark:bg-slate-900/40'
+          }`}>
+            <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400">
-                  <ShieldAlert className="w-4 h-4" />
-                </span>
-                <span className="text-sm font-bold text-slate-900 dark:text-white">Temporary Job Loss</span>
+                <span className="text-lg">💸</span>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">My Expenses Go Up</h3>
               </div>
-              <span className="text-[11px] font-semibold text-red-600 dark:text-red-400">Emergency Test</span>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                See what happens if my monthly expenses increase.
+              </p>
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
-              Primary salary drops to ₹0. Tests how many months your liquid reserves support essential living & loan EMIs.
-            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleSelectScenario('EXPENSE_INCREASE', { percentage: expenseIncreasePct })}
+                disabled={simulating}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeScenario === 'EXPENSE_INCREASE'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
+              >
+                {activeScenario === 'EXPENSE_INCREASE' ? `Active (+${expenseIncreasePct}%)` : 'Check'}
+              </button>
 
-            <div className="mt-3 flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
-              <span className="text-red-600 dark:text-red-400 font-bold">Simulate Survival Runway</span>
-              <span className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400">
-                Run Simulation <ArrowRight className="w-3.5 h-3.5" />
-              </span>
-            </div>
-          </div>
-
-          {/* Scenario 3: Expense Increase */}
-          <div 
-            className={`p-4 rounded-xl border transition-all cursor-pointer ${
-              activeScenario === 'EXPENSE_INCREASE' 
-                ? 'border-amber-500 bg-amber-50/40 dark:bg-amber-950/20 ring-1 ring-amber-500/50' 
-                : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/60 dark:bg-slate-900/40'
-            }`}
-            onClick={() => executeSimulation('EXPENSE_INCREASE', { percentage: expenseIncreasePct })}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400">
-                  <TrendingUp className="w-4 h-4" />
-                </span>
-                <span className="text-sm font-bold text-slate-900 dark:text-white">Expense Inflation</span>
-              </div>
-              <span className="text-[11px] font-semibold text-slate-500">Living Costs</span>
-            </div>
-
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
-              Simulate inflation in rent, food, utilities, and daily living expenses.
-            </p>
-
-            <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
               {[10, 20, 30].map(pct => (
                 <button
                   key={pct}
                   onClick={() => {
                     setExpenseIncreasePct(pct);
-                    executeSimulation('EXPENSE_INCREASE', { percentage: pct });
+                    handleSelectScenario('EXPENSE_INCREASE', { percentage: pct });
                   }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-2 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                     expenseIncreasePct === pct && activeScenario === 'EXPENSE_INCREASE'
-                      ? 'bg-amber-600 text-white shadow-xs'
-                      : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
                   }`}
                 >
                   +{pct}%
                 </button>
               ))}
-              <span className="text-[11px] text-slate-500">(+₹{Math.round(baseline.expenses.totalMonthlyExpenses * (expenseIncreasePct / 100)).toLocaleString()}/mo)</span>
             </div>
           </div>
 
-          {/* Scenario 4: Unexpected Expense */}
-          <div 
-            className={`p-4 rounded-xl border transition-all cursor-pointer ${
-              activeScenario === 'UNEXPECTED_EXPENSE' 
-                ? 'border-purple-500 bg-purple-50/40 dark:bg-purple-950/20 ring-1 ring-purple-500/50' 
-                : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/60 dark:bg-slate-900/40'
-            }`}
-            onClick={() => executeSimulation('UNEXPECTED_EXPENSE', { amount: unexpectedExpenseAmt })}
-          >
-            <div className="flex items-start justify-between gap-2">
+          {/* Card 4: I Have a Big Unexpected Expense */}
+          <div className={`p-4 rounded-xl border transition-all flex flex-col justify-between gap-3 ${
+            activeScenario === 'UNEXPECTED_EXPENSE'
+              ? 'border-purple-500 bg-purple-50/50 dark:bg-purple-950/30 ring-1 ring-purple-500/50'
+              : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/60 dark:bg-slate-900/40'
+          }`}>
+            <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-lg bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400">
-                  <AlertTriangle className="w-4 h-4" />
-                </span>
-                <span className="text-sm font-bold text-slate-900 dark:text-white">Unexpected Expense</span>
+                <span className="text-lg">🏥</span>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">I Have a Big Unexpected Expense</h3>
               </div>
-              <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400">Lump Sum Shock</span>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                See how an emergency expense may affect my finances.
+              </p>
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
-              Test the shock of a sudden medical bill, vehicle repair, or appliance replacement.
-            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleSelectScenario('UNEXPECTED_EXPENSE', { amount: unexpectedExpenseAmt })}
+                disabled={simulating}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeScenario === 'UNEXPECTED_EXPENSE'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
+              >
+                {activeScenario === 'UNEXPECTED_EXPENSE' ? `Active (₹${(unexpectedExpenseAmt / 1000)}k)` : 'Check'}
+              </button>
 
-            <div className="mt-3 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
               {[25000, 50000, 100000].map(amt => (
                 <button
                   key={amt}
                   onClick={() => {
                     setUnexpectedExpenseAmt(amt);
-                    executeSimulation('UNEXPECTED_EXPENSE', { amount: amt });
+                    handleSelectScenario('UNEXPECTED_EXPENSE', { amount: amt });
                   }}
-                  className={`px-2 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-2 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                     unexpectedExpenseAmt === amt && activeScenario === 'UNEXPECTED_EXPENSE'
-                      ? 'bg-purple-600 text-white shadow-xs'
-                      : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
                   }`}
                 >
                   ₹{(amt / 1000)}k
@@ -431,536 +500,476 @@ export const FutureFinanceSimulator: React.FC<FutureFinanceSimulatorProps> = ({ 
               ))}
             </div>
           </div>
+        </div>
 
-          {/* Scenario 5: Investment Contribution Change */}
-          <div 
-            className={`p-4 rounded-xl border transition-all cursor-pointer ${
-              activeScenario === 'INVESTMENT_CHANGE' 
-                ? 'border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/20 ring-1 ring-indigo-500/50' 
-                : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/60 dark:bg-slate-900/40'
-            }`}
-            onClick={() => executeSimulation('INVESTMENT_CHANGE', { newSip: customSipAmt })}
+        {/* Expandable "More Scenarios" section (kept neat & out of the way) */}
+        <div>
+          <button
+            onClick={() => setShowMoreScenarios(!showMoreScenarios)}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
           >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400">
-                  <TrendingUp className="w-4 h-4" />
-                </span>
-                <span className="text-sm font-bold text-slate-900 dark:text-white">Adjust Monthly SIP</span>
-              </div>
-              <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">Wealth Horizon</span>
-            </div>
+            <span>{showMoreScenarios ? 'Hide advanced scenarios' : 'More Scenarios (Salary Increase, Adjust SIP)'}</span>
+            {showMoreScenarios ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
 
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
-              Simulate increasing or decreasing your monthly mutual fund or index SIP contributions.
-            </p>
-
-            <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-              {[8000, 15000, 25000].map(amt => (
+          {showMoreScenarios && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+              {/* More Scenario 1: Salary Increase */}
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+                <span className="text-xs font-bold text-slate-900 dark:text-white block">📈 Salary Increase (+{salaryHikePct}%)</span>
+                <p className="text-[11px] text-slate-500">See AI-recommended allocation for extra income.</p>
                 <button
-                  key={amt}
-                  onClick={() => {
-                    setCustomSipAmt(amt);
-                    executeSimulation('INVESTMENT_CHANGE', { newSip: amt });
-                  }}
-                  className={`px-2 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    customSipAmt === amt && activeScenario === 'INVESTMENT_CHANGE'
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-                  }`}
+                  onClick={() => handleSelectScenario('SALARY_INCREASE', { percentage: salaryHikePct })}
+                  className="w-full py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer"
                 >
-                  ₹{(amt / 1000)}k/mo
+                  Check +{salaryHikePct}% Raise
                 </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Scenario 6: Salary Increase & Smart Surplus Allocation */}
-          <div 
-            className={`p-4 rounded-xl border transition-all cursor-pointer ${
-              activeScenario === 'SALARY_INCREASE' 
-                ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20 ring-1 ring-emerald-500/50' 
-                : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/60 dark:bg-slate-900/40'
-            }`}
-            onClick={() => executeSimulation('SALARY_INCREASE', { percentage: salaryHikePct })}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400">
-                  <TrendingUp className="w-4 h-4" />
-                </span>
-                <span className="text-sm font-bold text-slate-900 dark:text-white">Salary Increase</span>
               </div>
-              <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">Growth Plan</span>
-            </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
-              Simulate a promotion or salary hike with AI-recommended surplus allocation.
-            </p>
-
-            <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-              {[5, 10, 20].map(pct => (
+              {/* More Scenario 2: Adjust Monthly SIP */}
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+                <span className="text-xs font-bold text-slate-900 dark:text-white block">🎯 Adjust Monthly SIP (₹{(customSipAmt / 1000)}k/mo)</span>
+                <p className="text-[11px] text-slate-500">See how investing more or less impacts the future.</p>
                 <button
-                  key={pct}
-                  onClick={() => {
-                    setSalaryHikePct(pct);
-                    executeSimulation('SALARY_INCREASE', { percentage: pct });
-                  }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    salaryHikePct === pct && activeScenario === 'SALARY_INCREASE'
-                      ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-                  }`}
+                  onClick={() => handleSelectScenario('INVESTMENT_CHANGE', { newSip: customSipAmt })}
+                  className="w-full py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer"
                 >
-                  +{pct}%
+                  Check Investment Change
                 </button>
-              ))}
-              <span className="text-[11px] text-slate-500">(+₹{Math.round(baseline.income.primarySalary * (salaryHikePct / 100)).toLocaleString()}/mo)</span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* If Surplus Allocation is active (Salary Increase), show recommended distribution breakdown */}
-        {simulation?.metrics?.surplusAllocation && (
-          <div className="p-4 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold text-xs uppercase tracking-wider">
-                <Sparkles className="w-4 h-4 text-emerald-600" />
-                <span>AI Recommended Allocation of Additional Surplus (+₹{simulation.metrics.surplusAllocation.monthlyHikeAmount.toLocaleString()}/mo)</span>
-              </div>
-              <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">50/30/20 Wealth Blueprint</span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800/60">
-                <div className="text-slate-500 text-[11px]">Emergency Vault (30%)</div>
-                <div className="font-bold text-emerald-600 mt-0.5">₹{simulation.metrics.surplusAllocation.emergencyReserve.toLocaleString()}/mo</div>
-              </div>
-              <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800/60">
-                <div className="text-slate-500 text-[11px]">Long-Term SIPs (40%)</div>
-                <div className="font-bold text-blue-600 mt-0.5">₹{simulation.metrics.surplusAllocation.wealthInvestments.toLocaleString()}/mo</div>
-              </div>
-              <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800/60">
-                <div className="text-slate-500 text-[11px]">Goal Acceleration (20%)</div>
-                <div className="font-bold text-purple-600 mt-0.5">₹{simulation.metrics.surplusAllocation.goalAcceleration.toLocaleString()}/mo</div>
-              </div>
-              <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800/60">
-                <div className="text-slate-500 text-[11px]">Lifestyle Upgrade (10%)</div>
-                <div className="font-bold text-slate-700 dark:text-slate-300 mt-0.5">₹{simulation.metrics.surplusAllocation.lifestyleDiscretionary.toLocaleString()}/mo</div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* 3. Financial Safety Net & Risk Prediction */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Financial Safety Net (Survival Analysis) */}
-        <div className="card-surface rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400">
-                <ShieldCheck className="w-4 h-4" />
-              </span>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">Financial Safety Net</h3>
-            </div>
-            <span className="text-xs font-semibold text-slate-500">Survival Analysis</span>
-          </div>
-
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Emergency Fund Coverage</span>
-                <div className="text-2xl font-black text-slate-900 dark:text-white mt-0.5 flex items-baseline gap-2">
-                  <span>{currentMetrics.emergencyCoverageMonths} Months</span>
-                  <span className="text-xs font-normal text-slate-500">of essential living expenses</span>
-                </div>
-              </div>
-
-              <div className="text-right">
-                <span className="text-[11px] font-semibold text-slate-500">Liquid Reserve</span>
-                <div className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                  ₹{currentMetrics.emergencySavings.toLocaleString()}
-                </div>
-              </div>
-            </div>
-
-            {/* Coverage Progress Bar */}
-            <div className="space-y-1.5 pt-1">
-              <div className="w-full bg-slate-200 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full transition-all duration-500 ${
-                    currentMetrics.emergencyCoverageMonths >= 6 
-                      ? 'bg-emerald-500' 
-                      : currentMetrics.emergencyCoverageMonths >= 3 
-                        ? 'bg-amber-500' 
-                        : 'bg-red-500'
-                  }`}
-                  style={{ width: `${Math.min(100, (currentMetrics.emergencyCoverageMonths / 6) * 100)}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-[11px] text-slate-500 font-medium">
-                <span>0 Months</span>
-                <span className="text-amber-600 dark:text-amber-400 font-semibold">3 Mo (Minimum)</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold">6 Mo (Target Benchmark)</span>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-600 dark:text-slate-400 italic pt-1">
-              "Your current emergency savings could cover approximately <strong className="text-slate-900 dark:text-white">{currentMetrics.emergencyCoverageMonths} months</strong> of essential expenses under the selected assumptions."
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 pt-1 text-xs">
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-              <div className="text-slate-500 text-[11px]">Monthly Essential Burn</div>
-              <div className="font-bold text-slate-900 dark:text-white mt-0.5">
-                ₹{(baseline.expenses.essentialExpenses + baseline.debt.totalMonthlyEmi).toLocaleString()}/mo
-              </div>
-              <div className="text-[10px] text-slate-400 mt-1">Rent, Food, Healthcare & EMIs</div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-              <div className="text-slate-500 text-[11px]">Monthly Discretionary</div>
-              <div className="font-bold text-slate-900 dark:text-white mt-0.5">
-                ₹{baseline.expenses.nonEssentialExpenses.toLocaleString()}/mo
-              </div>
-              <div className="text-[10px] text-slate-400 mt-1">Can be trimmed in emergencies</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Financial Risk Prediction & Trends */}
-        <div className="card-surface rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400">
-                <Activity className="w-4 h-4" />
-              </span>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">Financial Risk Prediction</h3>
-            </div>
-            
-            {/* Risk Badge */}
-            <div className={`px-3 py-1 rounded-full text-xs font-black tracking-wide border uppercase ${
-              currentRisk.level === 'LOW RISK' 
-                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
-                : currentRisk.level === 'MODERATE RISK'
-                  ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800'
-                  : 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-red-300 dark:border-red-800 animate-pulse'
-            }`}>
-              {currentRisk.level}
-            </div>
-          </div>
-
-          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            {currentRisk.description}
-          </p>
-
-          {/* Financial Trend Indicators Matrix */}
-          <div className="space-y-2 pt-1">
-            <div className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white">
-              <span>Financial Trend Matrix</span>
-              <span className={`text-xs font-extrabold ${
-                currentTrends.overallPosition === 'Improving' ? 'text-emerald-600' :
-                currentTrends.overallPosition === 'Stable' ? 'text-blue-600' :
-                'text-red-600'
-              }`}>
-                Position: {currentTrends.overallPosition}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-              <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <span className="text-slate-500">Income</span>
-                <span className="font-bold text-emerald-600">↑ {currentTrends.income}</span>
-              </div>
-              <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <span className="text-slate-500">Savings</span>
-                <span className={`font-bold ${currentTrends.savings === 'Improving' ? 'text-emerald-600' : currentTrends.savings === 'Declining' ? 'text-red-500' : 'text-blue-600'}`}>
-                  {currentTrends.savings === 'Declining' ? '↓' : '↑'} {currentTrends.savings}
-                </span>
-              </div>
-              <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <span className="text-slate-500">Expenses</span>
-                <span className={`font-bold ${currentTrends.expenses === 'At Risk' ? 'text-red-500' : 'text-amber-600'}`}>
-                  {currentTrends.expenses}
-                </span>
-              </div>
-              <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <span className="text-slate-500">Investments</span>
-                <span className="font-bold text-purple-600">↑ {currentTrends.investments}</span>
-              </div>
-              <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <span className="text-slate-500">Debt & EMI</span>
-                <span className="font-bold text-slate-700 dark:text-slate-300">→ {currentTrends.debt}</span>
-              </div>
-              <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <span className="text-slate-500">Emergency</span>
-                <span className={`font-bold ${currentTrends.emergencyFund === 'At Risk' ? 'text-red-500' : 'text-emerald-600'}`}>
-                  {currentTrends.emergencyFund}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 4. Future Financial Timeline & Interactive Multi-Period Forecast */}
-      <div className="card-surface rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400">
-                <Calendar className="w-4 h-4" />
-              </span>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">Future Financial Timeline & Forecast</h3>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Explore how your savings, portfolio growth, and loan amortizations unfold across periods.
-            </p>
-          </div>
-
-          {/* Period Selector Tabs: 1M | 3M | 6M | 1Y | 3Y | 5Y */}
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
-            {(['1M', '3M', '6M', '1Y', '3Y', '5Y'] as const).map(period => (
-              <button
-                key={period}
-                onClick={() => setSelectedPeriod(period)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  selectedPeriod === period
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {period}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Selected Period High-Level Forecast Card */}
-        {selectedPeriodData && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Expected Inflow</span>
-              <div className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-1">
-                ₹{selectedPeriodData.expectedIncome.toLocaleString()}
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Across {selectedPeriodData.label}</div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Expected Outflow</span>
-              <div className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-1">
-                ₹{selectedPeriodData.expectedExpenses.toLocaleString()}
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Living + Loan EMIs</div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Estimated Portfolio</span>
-              <div className="text-lg sm:text-xl font-bold text-purple-600 dark:text-purple-400 mt-1">
-                ₹{selectedPeriodData.estimatedInvestmentValue.toLocaleString()}
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Compound Growth (10% p.a.)</div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Remaining Debt</span>
-              <div className="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-                ₹{selectedPeriodData.remainingDebt.toLocaleString()}
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Paid down via EMIs</div>
-            </div>
-          </div>
-        )}
-
-        {/* Visual Timeline Stepper (NOW -> 3M -> 6M -> 1Y -> 3Y -> 5Y) */}
-        <div className="space-y-3 pt-2">
-          <div className="text-xs font-bold text-slate-700 dark:text-slate-300">Milestone Progression Map</div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-            {activeForecasts.map(f => (
-              <div
-                key={f.periodKey}
-                onClick={() => setSelectedPeriod(f.periodKey)}
-                className={`p-3 rounded-xl border transition-all cursor-pointer ${
-                  selectedPeriod === f.periodKey
-                    ? 'border-blue-500 bg-blue-50/60 dark:bg-blue-950/40 ring-1 ring-blue-500'
-                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/40 dark:bg-slate-900/40'
-                }`}
-              >
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-extrabold text-slate-900 dark:text-white">{f.periodKey}</span>
-                  <span className={`text-[10px] font-bold ${f.netSavingsAdded >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                    {f.netSavingsAdded >= 0 ? '+' : ''}₹{Math.round(f.netSavingsAdded / 1000)}k
+        {/* ================================================== */}
+        {/* 6. JOB LOSS RESULT / ACTIVE SCENARIO RESULT        */}
+        {/* ================================================== */}
+        {isScenarioActive && simulation && (
+          <div className="pt-2 space-y-4">
+            {activeScenario === 'JOB_LOSS' ? (
+              /* Specific Job Loss Result Card as required by section 6 */
+              <div className="p-5 sm:p-6 rounded-2xl bg-red-50/70 dark:bg-red-950/30 border border-red-200 dark:border-red-800 space-y-4 animate-fadeIn">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold text-red-700 dark:text-red-300 uppercase tracking-wider">
+                    IF YOU LOSE YOUR JOB
                   </span>
+                  <button
+                    onClick={() => handleSelectScenario('BASELINE')}
+                    className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer"
+                  >
+                    Close
+                  </button>
                 </div>
-                <div className="text-xs font-bold text-purple-600 dark:text-purple-400 mt-1.5 truncate">
-                  ₹{(f.estimatedInvestmentValue / 100000).toFixed(1)}L Port.
+
+                <div>
+                  <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+                    Your savings may support essential expenses for:
+                  </p>
+                  <div className="text-3xl sm:text-4xl font-black text-red-600 dark:text-red-400 mt-1 tracking-tight">
+                    {simulation.metrics.emergencyCoverageMonths} MONTHS
+                  </div>
                 </div>
-                <div className="text-[10px] text-slate-400 mt-0.5">
-                  Stability: {f.stabilityScore}/100
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+                  <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900/60">
+                    <span className="text-slate-500">Emergency savings:</span>
+                    <div className="font-bold text-slate-900 dark:text-white text-sm mt-0.5">
+                      ₹{simulation.metrics.emergencySavings.toLocaleString()}
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900/60">
+                    <span className="text-slate-500">Essential monthly expenses:</span>
+                    <div className="font-bold text-slate-900 dark:text-white text-sm mt-0.5">
+                      ₹{essentialMonthlyExpenses.toLocaleString()}
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900/60">
+                    <span className="text-slate-500">Estimated support:</span>
+                    <div className="font-bold text-red-600 dark:text-red-400 text-sm mt-0.5">
+                      ~{simulation.metrics.emergencyCoverageMonths} months
+                    </div>
+                  </div>
+                </div>
+
+                {/* What should you do? */}
+                <div className="pt-2 space-y-2">
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                    What should you do?
+                  </h4>
+                  <ul className="text-xs text-slate-700 dark:text-slate-300 space-y-1.5 list-disc list-inside font-medium">
+                    <li>Reduce non-essential spending</li>
+                    <li>Protect emergency savings</li>
+                    <li>Prioritize rent, food, EMI and essential bills</li>
+                    <li>Pause unnecessary investments if needed</li>
+                  </ul>
+                </div>
+
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 italic pt-1 border-t border-red-200/60 dark:border-red-800/60">
+                  Estimate based on your current financial data and selected assumptions.
+                </p>
+              </div>
+            ) : (
+              /* Other Scenarios Result Card */
+              <div className="p-5 sm:p-6 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 space-y-4 animate-fadeIn">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold text-blue-700 dark:text-blue-300 uppercase tracking-wider">
+                    SCENARIO RESULT: {activeScenario.replace(/_/g, ' ')}
+                  </span>
+                  <button
+                    onClick={() => handleSelectScenario('BASELINE')}
+                    className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                <div>
+                  <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+                    {simulation.keyMetric.label}:
+                  </p>
+                  <div className="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 mt-0.5">
+                    {simulation.keyMetric.value}
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-600 dark:text-slate-300">
+                  {simulation.description}
+                </p>
+              </div>
+            )}
+
+            {/* ================================================== */}
+            {/* 10. CURRENT VS WHAT-IF (SIMPLE "BEFORE VS AFTER")  */}
+            {/* ================================================== */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                  Before vs After
+                </h3>
+                <span className="text-[11px] text-slate-500 font-medium">
+                  {activeScenario.replace(/_/g, ' ')}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                {/* Monthly Income */}
+                <div className="p-3 rounded-xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+                  <span className="text-slate-500 text-[11px] block">Monthly Income</span>
+                  <div className="text-slate-400 text-xs mt-0.5">Today: ₹{baseline.income.totalMonthlyIncome.toLocaleString()}</div>
+                  <div className="font-extrabold text-slate-900 dark:text-white text-sm mt-0.5">
+                    After: ₹{simulation.metrics.monthlyIncome.toLocaleString()}
+                  </div>
+                </div>
+
+                {/* Expenses */}
+                <div className="p-3 rounded-xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+                  <span className="text-slate-500 text-[11px] block">Expenses</span>
+                  <div className="text-slate-400 text-xs mt-0.5">Today: ₹{baseline.expenses.totalMonthlyExpenses.toLocaleString()}</div>
+                  <div className="font-extrabold text-slate-900 dark:text-white text-sm mt-0.5">
+                    After: ₹{simulation.metrics.monthlyExpenses.toLocaleString()}
+                  </div>
+                </div>
+
+                {/* Monthly Savings */}
+                <div className="p-3 rounded-xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+                  <span className="text-slate-500 text-[11px] block">Monthly Savings</span>
+                  <div className="text-slate-400 text-xs mt-0.5">Today: ₹{baseline.savings.monthlySavings.toLocaleString()}</div>
+                  <div className={`font-extrabold text-sm mt-0.5 ${
+                    simulation.metrics.monthlySavings >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+                  }`}>
+                    After: ₹{simulation.metrics.monthlySavings.toLocaleString()}
+                  </div>
+                </div>
+
+                {/* Savings */}
+                <div className="p-3 rounded-xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+                  <span className="text-slate-500 text-[11px] block">Emergency Savings</span>
+                  <div className="text-slate-400 text-xs mt-0.5">Today: ₹{baseline.savings.availableEmergencySavings.toLocaleString()}</div>
+                  <div className="font-extrabold text-slate-900 dark:text-white text-sm mt-0.5">
+                    After: ₹{simulation.metrics.emergencySavings.toLocaleString()}
+                  </div>
                 </div>
               </div>
-            ))}
+
+              {/* What changed? */}
+              <div className="pt-1 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                <span className="font-bold text-slate-900 dark:text-white">What changed? </span>
+                {simulation.metrics.monthlySavings < baseline.savings.monthlySavings ? (
+                  <span>
+                    Your monthly savings may decrease by{' '}
+                    <strong className="text-red-600 dark:text-red-400 font-bold">
+                      ₹{Math.abs(baseline.savings.monthlySavings - simulation.metrics.monthlySavings).toLocaleString()}
+                    </strong>.
+                  </span>
+                ) : simulation.metrics.monthlySavings > baseline.savings.monthlySavings ? (
+                  <span>
+                    Your monthly savings may increase by{' '}
+                    <strong className="text-emerald-600 dark:text-emerald-400 font-bold">
+                      +₹{(simulation.metrics.monthlySavings - baseline.savings.monthlySavings).toLocaleString()}
+                    </strong>.
+                  </span>
+                ) : (
+                  <span>Your monthly cash flow remains unchanged in this scenario.</span>
+                )}
+              </div>
+            </div>
           </div>
+        )}
+      </div>
+
+      {/* ================================================== */}
+      {/* 5. MY FINANCIAL PROTECTION                         */}
+      {/* ================================================== */}
+      <div className="card-surface rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+        <div>
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+            My Financial Protection
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Understand the role of your cash savings vs long-term investments.
+          </p>
         </div>
 
-        {/* Clear Disclaimer and Stated Assumptions */}
-        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 flex items-start gap-2.5">
-          <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <div className="font-bold text-slate-700 dark:text-slate-300">Estimated Forecast & Safety Notice</div>
-            <p>
-              Calculated using conservative models: 10% annualized return assumption on diversified portfolios, regular EMI amortizations, and steady essential obligations. 
-              <strong> Not a guarantee of future market returns or employment status.</strong> Actual results may vary based on market conditions.
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Card 1: Savings */}
+          <div className="p-4 sm:p-5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">SAVINGS</span>
+              <span className="text-emerald-600 dark:text-emerald-400 text-xs font-bold">Liquid Cash</span>
+            </div>
+            <div className="text-2xl font-black text-slate-900 dark:text-white">
+              ₹{baseline.savings.availableEmergencySavings.toLocaleString()}
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-400 pt-1">
+              Useful for emergencies and short-term needs.
+            </p>
+          </div>
+
+          {/* Card 2: Investments */}
+          <div className="p-4 sm:p-5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">INVESTMENTS</span>
+              <span className="text-blue-600 dark:text-blue-400 text-xs font-bold">Growth Assets</span>
+            </div>
+            <div className="text-2xl font-black text-blue-600 dark:text-blue-400">
+              ₹{baseline.investments.totalInvestmentValue.toLocaleString()}
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-400 pt-1">
+              Designed for long-term growth. Value may increase or decrease.
             </p>
           </div>
         </div>
       </div>
 
-      {/* 5. Comparison View: "Current Plan vs What-If Plan" */}
-      {simulation && simulation.comparison && (
-        <div className="card-surface rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400">
-                <Layers className="w-4 h-4" />
-              </span>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">Current Plan vs What-If Plan</h3>
-            </div>
-            
-            <button
-              onClick={handleSaveSimulation}
-              className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
-            >
-              <Zap className="w-3.5 h-3.5 text-amber-500" />
-              <span>Save Scenario</span>
-            </button>
+      {/* ================================================== */}
+      {/* 6. MY FUTURE OUTLOOK                               */}
+      {/* ================================================== */}
+      <div className="card-surface rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+              My Future Outlook
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Estimated financial projection based on current data.
+            </p>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800">
-                <tr>
-                  <th className="py-3 px-4">Financial Metric</th>
-                  <th className="py-3 px-4">Current Plan (Baseline)</th>
-                  <th className="py-3 px-4">What-If Plan ({activeScenario.replace(/_/g, ' ')})</th>
-                  <th className="py-3 px-4 text-right">Impact / Variance</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
-                {simulation.comparison.map((item, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/40 transition-colors">
-                    <td className="py-3 px-4 font-bold text-slate-900 dark:text-white">
-                      {item.metric}
-                    </td>
-                    <td className="py-3 px-4 text-slate-600 dark:text-slate-300">
-                      {item.currentPlan}
-                    </td>
-                    <td className="py-3 px-4 font-bold text-slate-900 dark:text-white">
-                      {item.whatIfPlan}
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <span className={`inline-flex items-center gap-1 font-bold ${
-                        item.status === 'positive' 
-                          ? 'text-emerald-600 dark:text-emerald-400' 
-                          : item.status === 'warning' 
-                            ? 'text-amber-600 dark:text-amber-400' 
-                            : 'text-red-600 dark:text-red-400'
-                      }`}>
-                        {item.status === 'positive' ? '✓' : item.status === 'warning' ? '⚠️' : '↓'}
-                        {typeof item.delta === 'number' && item.delta !== 0 ? (
-                          <span>
-                            {item.delta > 0 ? '+' : ''}{item.delta > 100 ? `₹${item.delta.toLocaleString()}` : `${item.delta} Mo`}
-                          </span>
-                        ) : (
-                          <span>{item.status.toUpperCase()}</span>
-                        )}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <button
+            onClick={() => setShowDetailedOutlook(!showDetailedOutlook)}
+            className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 cursor-pointer self-start sm:self-center"
+          >
+            <span>{showDetailedOutlook ? 'Hide Details' : 'View Details'}</span>
+            {showDetailedOutlook ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
         </div>
-      )}
 
-      {/* 6. AI Future Insights & Personalized Action Plan */}
-      {simulation?.aiExplanation && (
-        <div className="card-surface rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400">
-                <Sparkles className="w-4 h-4" />
-              </span>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">AI Financial Future Explanation</h3>
+        {/* 3 Simple Cards: 1 Year, 3 Years, 5 Years */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          {/* 1 Year */}
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase">1 YEAR</span>
+              <span className="text-emerald-600 dark:text-emerald-400 text-xs font-bold">● On Track</span>
             </div>
-            <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 rounded-md border border-blue-200 dark:border-blue-900/60">
-              GROW AI Advisor
+            <div className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-1">
+              ₹{(forecast1Y?.netSavingsAdded ? baseline.savings.availableEmergencySavings + Math.max(0, forecast1Y.netSavingsAdded) : baseline.savings.availableEmergencySavings).toLocaleString()}
+            </div>
+            <span className="text-[11px] text-slate-500 block">
+              Estimated savings
             </span>
           </div>
 
-          <div className="p-4 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40 text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-medium">
-            💡 {simulation.aiExplanation.summary}
+          {/* 3 Years */}
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase">3 YEARS</span>
+              <span className="text-emerald-600 dark:text-emerald-400 text-xs font-bold">● Good</span>
+            </div>
+            <div className="text-lg sm:text-xl font-bold text-purple-600 dark:text-purple-400 mt-1">
+              ₹{((forecast3Y?.estimatedInvestmentValue || 0) + baseline.savings.availableEmergencySavings).toLocaleString()}
+            </div>
+            <span className="text-[11px] text-slate-500 block">
+              Estimated savings + investments
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-            {/* What is going well? */}
-            <div className="p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 space-y-2">
-              <div className="flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                <span>What is going well?</span>
-              </div>
-              <ul className="space-y-1.5 text-slate-700 dark:text-slate-300 list-disc list-inside">
-                {simulation.aiExplanation.goingWell.map((pt, i) => (
-                  <li key={i}>{pt}</li>
-                ))}
-              </ul>
+          {/* 5 Years */}
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase">5 YEARS</span>
+              <span className="text-emerald-600 dark:text-emerald-400 text-xs font-bold">● Positive</span>
             </div>
-
-            {/* What is concerning? */}
-            <div className="p-4 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/60 space-y-2">
-              <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
-                <AlertTriangle className="w-4 h-4 text-amber-600" />
-                <span>What is concerning?</span>
-              </div>
-              <ul className="space-y-1.5 text-slate-700 dark:text-slate-300 list-disc list-inside">
-                {simulation.aiExplanation.concerning.map((pt, i) => (
-                  <li key={i}>{pt}</li>
-                ))}
-              </ul>
+            <div className="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400 mt-1">
+              ₹{((forecast5Y?.estimatedInvestmentValue || 0) + baseline.savings.availableEmergencySavings).toLocaleString()}
             </div>
-
-            {/* What may happen? */}
-            <div className="p-4 rounded-xl bg-purple-50/60 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/60 space-y-2">
-              <div className="flex items-center gap-1.5 font-bold text-purple-800 dark:text-purple-300">
-                <Activity className="w-4 h-4 text-purple-600" />
-                <span>What may happen?</span>
-              </div>
-              <ul className="space-y-1.5 text-slate-700 dark:text-slate-300 list-disc list-inside">
-                {simulation.aiExplanation.mayHappen.map((pt, i) => (
-                  <li key={i}>{pt}</li>
-                ))}
-              </ul>
-            </div>
-
-            {/* What can the user do? */}
-            <div className="p-4 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/60 space-y-2">
-              <div className="flex items-center gap-1.5 font-bold text-blue-800 dark:text-blue-300">
-                <Target className="w-4 h-4 text-blue-600" />
-                <span>Recommended Action Plan</span>
-              </div>
-              <ul className="space-y-1.5 text-slate-700 dark:text-slate-300 list-disc list-inside">
-                {simulation.aiExplanation.actions.map((pt, i) => (
-                  <li key={i}>{pt}</li>
-                ))}
-              </ul>
-            </div>
+            <span className="text-[11px] text-slate-500 block">
+              Estimated savings + investments
+            </span>
           </div>
         </div>
-      )}
+
+        {/* Expandable Technical Details (Kept hidden unless user clicks View Details) */}
+        {showDetailedOutlook && (
+          <div className="mt-3 p-4 rounded-xl bg-slate-100/70 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 space-y-3 animate-fadeIn text-xs">
+            <div className="font-bold text-slate-900 dark:text-white">
+              Detailed Period Forecasts (Conservative 10% p.a. estimate)
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
+              {forecasts.map(f => (
+                <div key={f.periodKey} className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <div className="font-bold text-slate-900 dark:text-white">{f.periodKey}</div>
+                  <div className="text-[11px] text-purple-600 dark:text-purple-400 mt-0.5">
+                    ₹{(f.estimatedInvestmentValue / 100000).toFixed(1)}L
+                  </div>
+                  <div className="text-[10px] text-slate-400">Debt: ₹{(f.remainingDebt / 100000).toFixed(1)}L</div>
+                </div>
+              ))}
+            </div>
+            <p className="text-[11px] text-slate-500 italic">
+              Estimated based on your current financial data and selected assumptions. Not guaranteed.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* ================================================== */}
+      {/* 7. IS MY FINANCIAL LIFE IMPROVING?                 */}
+      {/* ================================================== */}
+      <div className="card-surface rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+        <div>
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+            Is My Financial Life Improving?
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Your direction based on recent habits.
+          </p>
+        </div>
+
+        {/* Clean Checklist of 5 Indicators */}
+        <div className="divide-y divide-slate-100 dark:divide-slate-800 border-y border-slate-100 dark:border-slate-800 text-xs sm:text-sm">
+          <div className="py-2.5 flex items-center justify-between">
+            <span className="font-medium text-slate-700 dark:text-slate-300">Income</span>
+            <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+              <span>🟢</span> <span>Increasing</span>
+            </span>
+          </div>
+
+          <div className="py-2.5 flex items-center justify-between">
+            <span className="font-medium text-slate-700 dark:text-slate-300">Savings</span>
+            <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+              <span>🟢</span> <span>Increasing</span>
+            </span>
+          </div>
+
+          <div className="py-2.5 flex items-center justify-between">
+            <span className="font-medium text-slate-700 dark:text-slate-300">Expenses</span>
+            <span className="font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+              <span>🟡</span> <span>Increasing</span>
+            </span>
+          </div>
+
+          <div className="py-2.5 flex items-center justify-between">
+            <span className="font-medium text-slate-700 dark:text-slate-300">Investments</span>
+            <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+              <span>🟢</span> <span>Growing</span>
+            </span>
+          </div>
+
+          <div className="py-2.5 flex items-center justify-between">
+            <span className="font-medium text-slate-700 dark:text-slate-300">Debt</span>
+            <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+              <span>🟢</span> <span>Decreasing</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Overall Status + 1-line explanation */}
+        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>Overall:</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center gap-1">
+              <span>🟢</span> <span>Improving</span>
+            </span>
+          </div>
+
+          <p className="text-slate-600 dark:text-slate-400 text-xs">
+            "Your savings and investments are growing, but your expenses are also increasing."
+          </p>
+        </div>
+      </div>
+
+      {/* ================================================== */}
+      {/* 8. GROW AI ADVICE (ONLY 3 SHORT SECTIONS)          */}
+      {/* ================================================== */}
+      <div className="card-surface rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <span>GROW AI Advice</span>
+          </h2>
+          <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-md">
+            AI Assistant
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 text-xs">
+          {/* Section 1: What's Going Well? */}
+          <div className="p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 space-y-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300 text-xs">
+              <span>👍</span>
+              <span>What's Going Well?</span>
+            </div>
+            <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+              Your savings and long-term investments are steadily increasing.
+            </p>
+          </div>
+
+          {/* Section 2: What Should You Watch? */}
+          <div className="p-4 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/60 space-y-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300 text-xs">
+              <span>⚠️</span>
+              <span>What Should You Watch?</span>
+            </div>
+            <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+              Your living expenses have grown recently. Keep an eye on dining and non-essential shopping.
+            </p>
+          </div>
+
+          {/* Section 3: What Should You Do? */}
+          <div className="p-4 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/60 space-y-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-blue-800 dark:text-blue-300 text-xs">
+              <span>💡</span>
+              <span>What Should You Do?</span>
+            </div>
+            <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+              Build your emergency savings toward 6 months of essential expenses for higher security.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

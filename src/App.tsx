@@ -126,7 +126,7 @@ export const App: React.FC = () => {
       case 'personal_finance':
       case 'finance': return 'Personal Finance & Cash Flow';
       case 'smart_bills': return 'Pay Bills & Recharge';
-      case 'future_finance': return 'AI Financial Future Simulator & Risk Predictor';
+      case 'future_finance': return 'My Financial Future';
       case 'investments': return 'Investments & Markets';
       case 'platforms':
       case 'integrations': return 'Platform Integrations';
