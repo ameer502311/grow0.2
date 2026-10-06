@@ -18,10 +18,10 @@ export function createPortfolioRouter(memoryStore = {}, io = null) {
       platformId: 'safegold',
       name: 'SafeGold / Augmont 24K',
       category: 'Digital Gold',
-      isConnected: true,
-      lastSynced: new Date().toISOString(),
-      holdingsValue: 224000,
-      apiKeyMasked: 'SG_991823...881',
+      isConnected: false,
+      lastSynced: null,
+      holdingsValue: 0,
+      apiKeyMasked: '',
       logo: 'https://cdn-icons-png.flaticon.com/512/2916/2916115.png'
     },
     {
@@ -29,10 +29,10 @@ export function createPortfolioRouter(memoryStore = {}, io = null) {
       platformId: 'groww',
       name: 'Groww Mutual Funds & SIPs',
       category: 'Mutual Funds',
-      isConnected: true,
-      lastSynced: new Date(Date.now() - 3600000 * 2).toISOString(),
-      holdingsValue: 432000,
-      apiKeyMasked: 'GW_882019...411',
+      isConnected: false,
+      lastSynced: null,
+      holdingsValue: 0,
+      apiKeyMasked: '',
       logo: 'https://cdn-icons-png.flaticon.com/512/3408/3408545.png'
     },
     {
@@ -40,10 +40,10 @@ export function createPortfolioRouter(memoryStore = {}, io = null) {
       platformId: 'zerodha',
       name: 'Zerodha Kite Equity',
       category: 'Brokerage / Stocks',
-      isConnected: true,
-      lastSynced: new Date(Date.now() - 3600000 * 6).toISOString(),
-      holdingsValue: 257850,
-      apiKeyMasked: 'KITE_10293...192',
+      isConnected: false,
+      lastSynced: null,
+      holdingsValue: 0,
+      apiKeyMasked: '',
       logo: 'https://cdn-icons-png.flaticon.com/512/2422/2422796.png'
     },
     {
@@ -51,10 +51,10 @@ export function createPortfolioRouter(memoryStore = {}, io = null) {
       platformId: 'indmoney',
       name: 'INDmoney US Equities',
       category: 'Wealth Manager',
-      isConnected: true,
-      lastSynced: new Date(Date.now() - 3600000 * 12).toISOString(),
-      holdingsValue: 204500,
-      apiKeyMasked: 'IND_992810...551',
+      isConnected: false,
+      lastSynced: null,
+      holdingsValue: 0,
+      apiKeyMasked: '',
       logo: 'https://cdn-icons-png.flaticon.com/512/2953/2953361.png'
     }
   ];
@@ -124,13 +124,21 @@ export function createPortfolioRouter(memoryStore = {}, io = null) {
   // GET /api/portfolio/ai-rebalance
   router.get('/ai-rebalance', (req, res) => {
     const totalVal = connectedPlatformsStore.reduce((a, c) => a + (c.holdingsValue || 0), 0);
-    const goldVal = connectedPlatformsStore.find(p => p.platformId === 'safegold')?.holdingsValue || 224000;
-    const mfVal = connectedPlatformsStore.find(p => p.platformId === 'groww')?.holdingsValue || 432000;
-    const stockVal = connectedPlatformsStore.find(p => p.platformId === 'zerodha')?.holdingsValue || 257850;
+    const goldVal = connectedPlatformsStore.find(p => p.platformId === 'safegold')?.holdingsValue || 0;
+    const mfVal = connectedPlatformsStore.find(p => p.platformId === 'groww')?.holdingsValue || 0;
+    const stockVal = connectedPlatformsStore.find(p => p.platformId === 'zerodha')?.holdingsValue || 0;
 
-    const goldPercent = Number(((goldVal / totalVal) * 100).toFixed(1));
-    const mfPercent = Number(((mfVal / totalVal) * 100).toFixed(1));
-    const stockPercent = Number(((stockVal / totalVal) * 100).toFixed(1));
+    const goldPercent = totalVal > 0 ? Number(((goldVal / totalVal) * 100).toFixed(1)) : 0;
+    const mfPercent = totalVal > 0 ? Number(((mfVal / totalVal) * 100).toFixed(1)) : 0;
+    const stockPercent = totalVal > 0 ? Number(((stockVal / totalVal) * 100).toFixed(1)) : 0;
+
+    const rebalancingTips = totalVal > 0 ? [
+      `Your Mutual Fund allocation is ${mfPercent}% (Target: 50%). Step up equity SIPs by 5%.`,
+      `Your 24K Gold allocation is ${goldPercent}% (Target: 20%). Maintain current SafeGold SIP holding.`,
+      `Your Direct Stock portfolio is ${stockPercent}% (Target: 30%). Rebalance large-cap equity on market dips.`
+    ] : [
+      'Connect your Groww, SafeGold, or Zerodha accounts to see real-time AI rebalancing recommendations.'
+    ];
 
     res.json({
       success: true,
@@ -145,12 +153,8 @@ export function createPortfolioRouter(memoryStore = {}, io = null) {
           stocksPercent: 30.0,
           goldPercent: 20.0
         },
-        rebalancingTips: [
-          `Your Mutual Fund allocation is ${mfPercent}% (Target: 50%). Step up equity SIPs by 5%.`,
-          `Your 24K Gold allocation is ${goldPercent}% (Target: 20%). Maintain current SafeGold SIP holding.`,
-          `Your Direct Stock portfolio is ${stockPercent}% (Target: 30%). Rebalance large-cap equity on market dips.`
-        ],
-        healthRating: 'Optimal Asset Allocation'
+        rebalancingTips,
+        healthRating: totalVal > 0 ? 'Optimal Asset Allocation' : 'Pending Account Sync'
       }
     });
   });

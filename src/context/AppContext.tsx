@@ -7,8 +7,9 @@ import {
 import { 
   INITIAL_MARKET_TICKERS, INITIAL_NEWS, checkBackendHealth, 
   fetchBackendIncomes, fetchBackendExpenses, fetchBackendInvestments, fetchBackendLoans, 
-  fetchBackendPayments, fetchBackendPlatforms, postBackendIncome, postBackendExpense, 
-  postBackendInvestment, payBackendEmi, sendBackendPayment, toggleBackendPlatform 
+  fetchBackendPayments, fetchBackendPlatforms, postBackendIncome, deleteBackendIncome, 
+  postBackendExpense, deleteBackendExpense, postBackendInvestment, payBackendEmi, 
+  sendBackendPayment, toggleBackendPlatform 
 } from '../services/api';
 import { computeFinancialHealth } from '../utils/healthScore';
 
@@ -62,68 +63,37 @@ interface AppContextType {
 }
 
 const SYSTEM_DEFAULT_AI_KEY = (import.meta as any).env?.VITE_AI_API_KEY || (typeof process !== 'undefined' ? process.env.AI_API_KEY : '') || '';
+const SYSTEM_GROQ_KEY = (import.meta as any).env?.VITE_GROQ_API_KEY || (typeof process !== 'undefined' ? process.env.GROQ_API_KEY : '') || SYSTEM_DEFAULT_AI_KEY;
 
 const defaultUser: UserProfile = {
   id: 'u-101',
-  name: 'Alex Vance',
-  email: 'alex.vance@fintech.io',
+  name: 'User',
+  email: 'user@fintech.io',
   role: 'USER',
   isVerified: true,
   currency: 'INR',
-  monthlyIncomeTarget: 185000,
-  preferredAiModel: 'GEMINI',
+  monthlyIncomeTarget: 0,
+  preferredAiModel: 'GROQ',
+  groqApiKey: SYSTEM_GROQ_KEY,
   geminiApiKey: SYSTEM_DEFAULT_AI_KEY,
   openaiApiKey: SYSTEM_DEFAULT_AI_KEY
 };
 
-const initialIncomes: IncomeItem[] = [
-  { id: 'inc-1', amount: 145000, date: '2026-07-01', category: 'Salary', notes: 'Monthly Tech Salary' },
-  { id: 'inc-2', amount: 28000, date: '2026-07-12', category: 'Freelance', notes: 'UI Design Consulting' },
-  { id: 'inc-3', amount: 12000, date: '2026-07-18', category: 'Rental', notes: 'Studio Apartment Rent' }
-];
-
-const initialExpenses: ExpenseItem[] = [
-  { id: 'exp-1', amount: 24000, date: '2026-07-02', category: 'Rent', notes: 'House Rent' },
-  { id: 'exp-2', amount: 14500, date: '2026-07-05', category: 'Food', notes: 'Groceries & Gourmet Dining' },
-  { id: 'exp-3', amount: 8200, date: '2026-07-08', category: 'Shopping', notes: 'Workwear & Electronics' },
-  { id: 'exp-4', amount: 4800, date: '2026-07-10', category: 'Fuel', notes: 'Car Petrol Fill' },
-  { id: 'exp-5', amount: 18500, date: '2026-07-15', category: 'EMI', notes: 'Car Loan Monthly Payment' }
-];
-
-const initialBudgets: BudgetGoal[] = [
-  { id: 'b-1', category: 'Total Monthly', limitAmount: 90000, period: 'Monthly', spentAmount: 73500 },
-  { id: 'b-2', category: 'Food', limitAmount: 16000, period: 'Monthly', spentAmount: 14500 },
-  { id: 'b-3', category: 'Shopping', limitAmount: 10000, period: 'Monthly', spentAmount: 8200 },
-  { id: 'b-4', category: 'Travel', limitAmount: 8000, period: 'Monthly', spentAmount: 4800 }
-];
-
-const initialGoals: SavingsGoal[] = [
-  { id: 'g-1', title: 'Japan Vacation 2027', targetAmount: 250000, currentAmount: 140000, targetDate: '2027-04-15', category: 'Vacation' },
-  { id: 'g-2', title: 'Emergency Fund (6 Mo)', targetAmount: 450000, currentAmount: 320000, targetDate: '2026-12-31', category: 'Emergency Fund' }
-];
-
-const initialInvestments: InvestmentAsset[] = [
-  { id: 'inv-1', name: 'SafeGold 24K 99.9% Pure', category: 'Gold', investedAmount: 180000, currentValue: 224000, purchaseDate: '2024-03-10' },
-  { id: 'inv-2', name: 'Groww Nifty 50 Index Fund SIP', category: 'Mutual Funds', investedAmount: 340000, currentValue: 432000, purchaseDate: '2023-01-15' },
-  { id: 'inv-3', name: 'TCS & Reliance Equity (Zerodha)', category: 'Stocks', investedAmount: 210000, currentValue: 258000, purchaseDate: '2023-11-20' },
-  { id: 'inv-4', name: 'Bitcoin (0.12 BTC)', category: 'Crypto', investedAmount: 380000, currentValue: 672000, purchaseDate: '2023-06-05' }
-];
-
-const initialLoans: LoanItem[] = [
-  { id: 'l-1', title: 'Hyundai Creta EV Loan', type: 'Car Loan', principalAmount: 1200000, remainingBalance: 780000, interestRate: 8.75, tenureMonths: 60, monthlyEmi: 18500, dueDateDay: 10, startDate: '2024-01-10' },
-  { id: 'l-2', title: 'HDFC Infinia Credit Card Balance', type: 'Credit Card', principalAmount: 45000, remainingBalance: 12500, interestRate: 14.5, tenureMonths: 12, monthlyEmi: 4200, dueDateDay: 22, startDate: '2026-05-01' }
-];
+const initialIncomes: IncomeItem[] = [];
+const initialExpenses: ExpenseItem[] = [];
+const initialBudgets: BudgetGoal[] = [];
+const initialGoals: SavingsGoal[] = [];
+const initialInvestments: InvestmentAsset[] = [];
+const initialLoans: LoanItem[] = [];
 
 const initialPlatforms: ConnectedPlatform[] = [
-  { id: 'p-1', name: 'Groww', category: 'Mutual Funds', isConnected: true, lastSynced: 'Today at 18:42', holdingsValue: 432000, logo: '🟢' },
-  { id: 'p-2', name: 'SafeGold / Augmont', category: 'Digital Gold', isConnected: true, lastSynced: 'Today at 19:10', holdingsValue: 224000, logo: '🏆' },
-  { id: 'p-3', name: 'Aura Gold', category: 'Digital Gold', isConnected: true, lastSynced: 'Yesterday', holdingsValue: 58500, logo: '✨' },
-  { id: 'p-4', name: 'Zerodha', category: 'Brokerage', isConnected: true, lastSynced: 'Today at 15:30', holdingsValue: 258000, logo: '🔵' }
+  { id: 'p-1', name: 'Groww', category: 'Mutual Funds', isConnected: false, lastSynced: 'Not connected', holdingsValue: 0, logo: '🟢' },
+  { id: 'p-2', name: 'SafeGold / Augmont', category: 'Digital Gold', isConnected: false, lastSynced: 'Not connected', holdingsValue: 0, logo: '🏆' },
+  { id: 'p-3', name: 'Aura Gold', category: 'Digital Gold', isConnected: false, lastSynced: 'Not connected', holdingsValue: 0, logo: '✨' },
+  { id: 'p-4', name: 'Zerodha', category: 'Brokerage', isConnected: false, lastSynced: 'Not connected', holdingsValue: 0, logo: '🔵' }
 ];
 
-const initialTransactions: PaymentTransaction[] = [
-  { id: 'tx-101', provider: 'GPay', amount: 5000, purpose: 'Digital Gold Buy', status: 'SUCCESS', referenceNo: 'UPI/6192840192', timestamp: '2026-07-27 16:30' }
-];
+const initialTransactions: PaymentTransaction[] = [];
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -140,14 +110,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [investments, setInvestments] = useState<InvestmentAsset[]>(initialInvestments);
   const [loans, setLoans] = useState<LoanItem[]>(initialLoans);
   const [tickers, setTickers] = useState<MarketTicker[]>(INITIAL_MARKET_TICKERS);
-  const [news] = useState<NewsArticle[]>(INITIAL_NEWS);
+  const [news, setNews] = useState<NewsArticle[]>(INITIAL_NEWS);
   const [platforms, setPlatforms] = useState<ConnectedPlatform[]>(initialPlatforms);
   const [transactions, setTransactions] = useState<PaymentTransaction[]>(initialTransactions);
 
   const [notifications, setNotifications] = useState<string[]>([
-    '✨ Google Gemini 1.5 AI Advisor connected as primary AI engine.',
-    '💳 GPay Payment: ₹5,000 processed for 24K Digital Gold purchase.',
-    '🔗 Groww Sync: Portfolio synchronized successfully (+₹12,400 returns).'
+    '✨ Grow 0.2 Real-Time Fintech Engine Active.',
+    '📡 Live Market Data feeds & Automated Schedulers operational.'
   ]);
 
   const fetchLiveTickers = async () => {
@@ -166,6 +135,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     fetchLiveTickers();
+    fetch('/api/markets/news').then(r => r.json()).then(json => {
+      if (json && json.data && Array.isArray(json.data) && json.data.length > 0) {
+        setNews(json.data);
+      }
+    }).catch(() => {});
     checkBackendHealth().then(res => {
       setBackendConnected(res.connected);
       if (res.connected) {
@@ -211,8 +185,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await postBackendIncome(newInc);
   };
 
-  const deleteIncome = (id: string) => {
+  const deleteIncome = async (id: string) => {
     setIncomes(prev => prev.filter(i => i.id !== id));
+    await deleteBackendIncome(id);
   };
 
   const addExpense = async (item: Omit<ExpenseItem, 'id'>) => {
@@ -221,8 +196,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await postBackendExpense(newExp);
   };
 
-  const deleteExpense = (id: string) => {
+  const deleteExpense = async (id: string) => {
     setExpenses(prev => prev.filter(e => e.id !== id));
+    await deleteBackendExpense(id);
   };
 
   const updateBudget = (id: string, limit: number) => {

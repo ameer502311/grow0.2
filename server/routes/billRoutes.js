@@ -9,58 +9,7 @@ export function createBillRouter(memoryStore = {}, io = null) {
 
   // In-memory or Database Stores
   let paymentOrdersStore = [];
-  let billTransactionsStore = [
-    {
-      id: 'btx-101',
-      userId: 'u-101',
-      paymentOrderId: 'pord-101',
-      internalOrderId: 'GROW_ORDER_89102341',
-      category: 'electricity',
-      billerId: 'BESCOM',
-      billerName: 'BESCOM Electricity',
-      customerIdentifier: '1029384756',
-      maskedCustomerIdentifier: '******4756',
-      billRequestId: 'breq_101',
-      billPaymentId: 'bpay_101',
-      provider: 'RAZORPAY_BBPS',
-      providerReference: 'BBPS-892301928410',
-      providerPaymentId: 'pay_Mock1029384',
-      amount: 1450,
-      convenienceFee: 0,
-      totalAmount: 1450,
-      currency: 'INR',
-      paymentMethod: 'UPI (Google Pay)',
-      paymentStatus: 'SUCCESS',
-      billStatus: 'SUCCESS',
-      idempotencyKey: 'idemp-101',
-      transactionDate: new Date(Date.now() - 86400000 * 2).toISOString()
-    },
-    {
-      id: 'btx-102',
-      userId: 'u-101',
-      paymentOrderId: 'pord-102',
-      internalOrderId: 'GROW_ORDER_99201824',
-      category: 'mobile_recharge',
-      billerId: 'JIO_RECHARGE',
-      billerName: 'Jio Prepaid Mobile',
-      customerIdentifier: '9876543210',
-      maskedCustomerIdentifier: '******3210',
-      billRequestId: 'breq_102',
-      billPaymentId: 'bpay_102',
-      provider: 'RAZORPAY_BBPS',
-      providerReference: 'BBPS-771920394812',
-      providerPaymentId: 'pay_Mock8839201',
-      amount: 299,
-      convenienceFee: 0,
-      totalAmount: 299,
-      currency: 'INR',
-      paymentMethod: 'UPI (PhonePe)',
-      paymentStatus: 'SUCCESS',
-      billStatus: 'SUCCESS',
-      idempotencyKey: 'idemp-102',
-      transactionDate: new Date(Date.now() - 86400000 * 5).toISOString()
-    }
-  ];
+  let billTransactionsStore = [];
 
   // GET /api/bills/categories
   router.get('/categories', async (req, res) => {

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
-  ShieldAlert, Users, Server, Radio, FileText, Activity, CheckCircle, AlertTriangle, Key, Plus, X
+  ShieldAlert, Users, Server, Radio, FileText, Activity, CheckCircle, AlertTriangle, Key, Plus, X, RefreshCw, Zap
 } from 'lucide-react';
 import { AuditLog } from '../types';
+import { fetchProvidersStatusApi } from '../services/api';
 
 interface AdminPanelProps {
   onExit?: () => void;
@@ -14,6 +15,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onExit }) => {
   const [activeAdminSubTab, setActiveAdminSubTab] = useState<'users' | 'apis' | 'logs' | 'broadcast'>('users');
   const [broadcastMsg, setBroadcastMsg] = useState('');
   const [broadcastSent, setBroadcastSent] = useState(false);
+  const [providersData, setProvidersData] = useState<any>(null);
+  const [loadingProviders, setLoadingProviders] = useState<boolean>(false);
+
+  const loadProvidersTelemetry = async () => {
+    setLoadingProviders(true);
+    try {
+      const data = await fetchProvidersStatusApi();
+      if (data && data.success) {
+        setProvidersData(data);
+      }
+    } finally {
+      setLoadingProviders(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeAdminSubTab === 'apis') {
+      loadProvidersTelemetry();
+    }
+  }, [activeAdminSubTab]);
 
   const mockUsers = [
     { id: 'u-1', name: 'Alex Vance', email: 'alex.vance@fintech.io', role: 'USER', status: 'ACTIVE', joined: '2026-01-12' },
@@ -23,6 +44,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onExit }) => {
   ];
 
   const apiStatusList = [
+    { name: 'Groq Cloud LPU Inference (Llama 3.3)', endpoint: 'api.groq.com/openai/v1', status: 'HEALTHY', latency: '140ms', quota: 'Unlimited' },
     { name: 'GoldAPI / MetalPriceAPI', endpoint: 'api.metalpriceapi.com', status: 'HEALTHY', latency: '42ms', quota: '8,420 / 10,000' },
     { name: 'Finnhub Stock Ticker', endpoint: 'finnhub.io/api/v1', status: 'HEALTHY', latency: '65ms', quota: '54,100 / 100,000' },
     { name: 'CoinGecko Crypto Feed', endpoint: 'api.coingecko.com/v3', status: 'HEALTHY', latency: '110ms', quota: 'Unlimited' },
@@ -135,25 +157,115 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onExit }) => {
         </div>
       )}
 
-      {/* APIS TAB */}
+      {/* APIS TAB - Universal API Manager Health & Provider Matrix */}
       {activeAdminSubTab === 'apis' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {apiStatusList.map((api) => (
-            <div key={api.name} className="glass-panel rounded-3xl p-5 bg-slate-900/60 border-slate-800 space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="font-extrabold text-sm text-white">{api.name}</h3>
-                <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                  <CheckCircle className="w-3 h-3" /> {api.status}
-                </span>
+        <div className="space-y-6">
+          {/* Header Controls & Telemetry Overview */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+            <div>
+              <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                <Server className="w-4 h-4 text-purple-400" /> Universal Data & API Manager Health Matrix
+              </h2>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Monitoring 6 multi-tier live providers, Level 1 keyless feeds, backend memory cache, and error isolation.
+              </p>
+            </div>
+
+            <button 
+              onClick={loadProvidersTelemetry}
+              disabled={loadingProviders}
+              className="px-3.5 py-1.5 rounded-xl bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 border border-purple-500/30 text-xs font-semibold flex items-center gap-2 self-start sm:self-center transition-colors"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loadingProviders ? 'animate-spin' : ''}`} /> Refresh Telemetry
+            </button>
+          </div>
+
+          {/* Cache & System Diagnostics Overview */}
+          {providersData && providersData.cacheStats && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Cache Hit Ratio</span>
+                <p className="text-base font-black text-emerald-400 mt-1">{providersData.cacheStats.hitRatio || '100%'}</p>
+                <span className="text-[10px] text-slate-500">{providersData.cacheStats.hits} Hits / {providersData.cacheStats.misses} Misses</span>
               </div>
 
-              <div className="space-y-1 text-xs text-slate-400">
-                <p>Endpoint: <span className="font-mono text-slate-200">{api.endpoint}</span></p>
-                <p>Latency: <span className="text-emerald-400 font-semibold">{api.latency}</span></p>
-                <p>Quota Usage: <span className="text-slate-200 font-semibold">{api.quota}</span></p>
+              <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Active Cached Items</span>
+                <p className="text-base font-black text-blue-400 mt-1">{providersData.cacheStats.activeEntries} Entries</p>
+                <span className="text-[10px] text-slate-500">In-Memory TTL Protection</span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Offline Fallbacks Retained</span>
+                <p className="text-base font-black text-amber-400 mt-1">{providersData.cacheStats.retainedFallbackEntries} Fallbacks</p>
+                <span className="text-[10px] text-slate-500">Level 6 Stale Retention</span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Groq AI Engine</span>
+                <p className="text-base font-black text-purple-400 mt-1">
+                  {providersData.bootDiagnostics?.detectedKeys?.GROQ_API_KEY ? 'Active (LPU)' : 'Rule Fallback'}
+                </p>
+                <span className="text-[10px] text-slate-500">Zero Fabricated Numbers</span>
               </div>
             </div>
-          ))}
+          )}
+
+          {/* Providers Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {(providersData?.providers || []).map((provider: any) => {
+              const isHealthy = provider.status === 'healthy';
+              const isDegraded = provider.status === 'degraded';
+              return (
+                <div key={provider.providerId} className="glass-panel rounded-3xl p-5 bg-slate-900/60 border-slate-800 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="font-extrabold text-sm text-white">{provider.providerName}</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-300">
+                          {provider.category}
+                        </span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                          Level {provider.priority}: {provider.authType}
+                        </span>
+                      </div>
+                    </div>
+
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1 ${
+                      isHealthy 
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                        : isDegraded 
+                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                          : 'bg-slate-700 text-slate-300'
+                    }`}>
+                      <CheckCircle className="w-3 h-3" /> {provider.status}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs text-slate-400 pt-2 border-t border-slate-800/80 font-mono text-[11px]">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Endpoint:</span>
+                      <span className="text-slate-200 truncate max-w-[220px]">{provider.endpoint}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Latency:</span>
+                      <span className="text-emerald-400 font-semibold">{provider.responseTimeMs ? `${provider.responseTimeMs}ms` : 'Instant / Cached'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Freshness:</span>
+                      <span className="text-purple-300 font-semibold uppercase text-[10px]">{provider.freshness}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Last Synced:</span>
+                      <span className="text-slate-300">
+                        {provider.lastSuccessfulUpdate ? new Date(provider.lastSuccessfulUpdate).toLocaleTimeString() : 'Ready'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

@@ -47,7 +47,7 @@ export const DailyMoneyCommandCenter: React.FC<DailyMoneyCommandCenterProps> = (
   // AI Assistant Chat
   const [aiQuestion, setAiQuestion] = useState('');
   const [aiChatHistory, setAiChatHistory] = useState<{ sender: 'user' | 'ai'; text: string }[]>([
-    { sender: 'ai', text: 'Hello Alex! I am your AI Daily Money Assistant. Ask me anything about your safe daily spend, upcoming bills, or portfolio goals.' }
+    { sender: 'ai', text: `Hello! I am your AI Daily Money Assistant. Ask me anything about your safe daily spend, upcoming bills, or financial tracking.` }
   ]);
   const [aiLoading, setAiLoading] = useState(false);
 
@@ -217,7 +217,7 @@ export const DailyMoneyCommandCenter: React.FC<DailyMoneyCommandCenterProps> = (
         <div>
           <div className="flex items-center space-x-2 text-xs font-bold text-emerald-400 mb-1 uppercase tracking-wider">
             <Sparkles className="w-4 h-4" />
-            <span>{getGreeting()}, {todayData?.user_name || user?.name || 'Alex Vance'}</span>
+            <span>{getGreeting()}, {todayData?.user_name || user?.name || 'User'}</span>
           </div>
           <h1 className="text-2xl font-black text-white tracking-tight">Daily Money Command Center</h1>
           <p className="text-xs text-slate-400 mt-1">Everything important about your money today—in one clear dashboard.</p>

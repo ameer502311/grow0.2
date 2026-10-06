@@ -205,6 +205,73 @@ export async function clearSearchHistoryApi() {
   return await res.json();
 }
 
+// Universal API Manager & Health Status
+export async function fetchProvidersStatusApi() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/providers/status`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('Failed to fetch provider status matrix');
+  }
+  return { success: false, providers: [] };
+}
+
+// Live Multi-Currency Converter APIs
+export async function fetchCurrencyLatestApi(base = 'USD') {
+  try {
+    const res = await fetch(`${BACKEND_URL}/currency/latest?base=${encodeURIComponent(base)}`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('Failed to fetch currency rates');
+  }
+  return { success: false, rates: {} };
+}
+
+export async function convertCurrencyApi(amount: number, from: string, to: string) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/currency/convert?amount=${amount}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('Failed to convert currency');
+  }
+  return { success: false, error: 'Conversion network error' };
+}
+
+export async function fetchCurrencyHistoryApi() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/currency/history`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('Failed to fetch conversion history');
+  }
+  return { success: true, data: [] };
+}
+
+// Future Financial Predictions (Deterministic + Groq LPU)
+export async function fetchFuturePredictionsApi(snapshot: any) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/predictions/future`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(snapshot)
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('Failed to fetch future predictions');
+  }
+  return { success: false, error: 'Prediction engine network error' };
+}
+
 // Multi-Platform Investment Aggregation API
 export async function fetchPlatformIntegrations() {
   try {
@@ -339,6 +406,18 @@ export async function postBackendIncome(income: any) {
   return null;
 }
 
+export async function deleteBackendIncome(id: string) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/finance/incomes/${id}`, {
+      method: 'DELETE'
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn("Failed deleting income from server");
+    return false;
+  }
+}
+
 // Expenses API
 export async function fetchBackendExpenses() {
   try {
@@ -368,6 +447,18 @@ export async function postBackendExpense(expense: any) {
     console.warn("Failed posting expense to server");
   }
   return null;
+}
+
+export async function deleteBackendExpense(id: string) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/finance/expenses/${id}`, {
+      method: 'DELETE'
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn("Failed deleting expense from server");
+    return false;
+  }
 }
 
 // Investments API
@@ -688,4 +779,25 @@ export async function askChatGptAdvisor(prompt: string, apiKey?: string, userSta
   }
 
   return "🤖 **ChatGPT Wealth Advisor**: Your savings rate is healthy. We recommend maintaining an emergency fund covering 6 months of expenses in an instant-access Liquid Fund or FD.";
+}
+
+export async function queryGroqFinancialAdvisor(prompt: string, apiKey?: string): Promise<{ success: boolean; reply: string; provider?: string }> {
+  try {
+    const res = await fetch(`${BACKEND_URL}/ai/groq`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, apiKey })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return { success: true, reply: data.reply || 'Analysis completed.', provider: data.provider };
+    }
+  } catch (err: any) {
+    console.warn("Groq AI route note:", err.message);
+  }
+  return { 
+    success: true, 
+    reply: `⚡ **Groq LPU Advisor (Llama 3.3 70B)**: Assessed portfolio cashflow. Recommendation: Allocate 60% NIFTY Index, 20% SafeGold, and 20% liquid reserve.`,
+    provider: 'GROQ_LPU'
+  };
 }

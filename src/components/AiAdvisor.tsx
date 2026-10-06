@@ -82,6 +82,7 @@ export const AiAdvisor: React.FC<AiAdvisorProps> = ({ onExit }) => {
 
   // Keys modal state
   const [showKeySetting, setShowKeySetting] = useState(false);
+  const [groqKeyInput, setGroqKeyInput] = useState(user.groqApiKey || '');
   const [openaiKeyInput, setOpenaiKeyInput] = useState(user.openaiApiKey || '');
 
   const handleStartNewChat = () => {
@@ -149,7 +150,7 @@ export const AiAdvisor: React.FC<AiAdvisorProps> = ({ onExit }) => {
       message: userText,
       conversationId,
       messages: historyForApi,
-      apiKey: user.openaiApiKey,
+      apiKey: user.groqApiKey || user.openaiApiKey,
       signal: abortControllerRef.current.signal,
       onChunk: (delta) => {
         setMessages(prev => prev.map(m => {
@@ -252,7 +253,9 @@ export const AiAdvisor: React.FC<AiAdvisorProps> = ({ onExit }) => {
   const handleSaveApiKeys = () => {
     setUser(prev => ({ 
       ...prev, 
-      openaiApiKey: openaiKeyInput
+      groqApiKey: groqKeyInput,
+      openaiApiKey: openaiKeyInput,
+      preferredAiModel: groqKeyInput ? 'GROQ' : prev.preferredAiModel
     }));
     setShowKeySetting(false);
   };
@@ -379,12 +382,12 @@ export const AiAdvisor: React.FC<AiAdvisorProps> = ({ onExit }) => {
                 <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
                   GROW AI Assistant
                 </h2>
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800">
-                  Active Guidance
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800">
+                  ⚡ Groq LPU (Llama 3.3 70B)
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                💡 Trustworthy Financial Intelligence • Real-time Guidance
+                💡 Sub-second Financial Intelligence • Real-time Guidance
               </p>
             </div>
           </div>
@@ -427,23 +430,57 @@ export const AiAdvisor: React.FC<AiAdvisorProps> = ({ onExit }) => {
 
         {/* API Key Modal Drawer */}
         {showKeySetting && (
-          <div className="p-4 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs space-x-3">
-            <div className="flex-1 space-y-1">
-              <span className="font-semibold text-slate-700 dark:text-slate-300">OpenAI API Key (Optional)</span>
-              <input
-                type="password"
-                placeholder="sk-proj-..."
-                value={openaiKeyInput}
-                onChange={e => setOpenaiKeyInput(e.target.value)}
-                className="w-full p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-mono focus:outline-none focus:border-blue-600"
-              />
+          <div className="p-4 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 space-y-3 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <Key className="w-3.5 h-3.5 text-amber-500" />
+                Configure AI API Keys (Groq Cloud LPU Primary)
+              </span>
+              <a 
+                href="https://console.groq.com/keys" 
+                target="_blank" 
+                rel="noreferrer"
+                className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-semibold"
+              >
+                Get Free Groq Key (console.groq.com) →
+              </a>
             </div>
-            <button
-              onClick={handleSaveApiKeys}
-              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold self-end shadow-sm"
-            >
-              Save Key
-            </button>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                  <span>⚡ Groq API Key</span>
+                  <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.2 rounded border border-emerald-200 dark:border-emerald-800">Fastest</span>
+                </span>
+                <input
+                  type="password"
+                  placeholder="gsk_..."
+                  value={groqKeyInput}
+                  onChange={e => setGroqKeyInput(e.target.value)}
+                  className="w-full p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-mono focus:outline-none focus:border-blue-600"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <span className="font-semibold text-slate-700 dark:text-slate-300">OpenAI / Gemini Key (Fallback)</span>
+                <input
+                  type="password"
+                  placeholder="sk-proj-... / AIza..."
+                  value={openaiKeyInput}
+                  onChange={e => setOpenaiKeyInput(e.target.value)}
+                  className="w-full p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-mono focus:outline-none focus:border-blue-600"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-1">
+              <button
+                onClick={handleSaveApiKeys}
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm cursor-pointer"
+              >
+                Save Keys & Activate Groq
+              </button>
+            </div>
           </div>
         )}
 

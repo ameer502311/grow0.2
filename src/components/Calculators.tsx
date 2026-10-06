@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   Calculator as CalcIcon, TrendingUp, PiggyBank, DollarSign, 
-  Sparkles, Layers, ShieldCheck, RefreshCw, X
+  Sparkles, Layers, ShieldCheck, RefreshCw, X, ArrowRightLeft, Globe, Clock, CheckCircle2
 } from 'lucide-react';
 import { calculateSIP, calculateFD, calculateEMI, calculateRetirement, calculateInflation, calculateCAGR } from '../utils/calculators';
+import { convertCurrencyApi, fetchCurrencyLatestApi } from '../services/api';
 
-type CalcType = 'sip' | 'fd' | 'emi' | 'cagr' | 'retirement' | 'inflation';
+type CalcType = 'sip' | 'fd' | 'emi' | 'cagr' | 'retirement' | 'inflation' | 'currency';
 
 interface CalculatorsProps {
   onExit?: () => void;
@@ -15,6 +16,61 @@ interface CalculatorsProps {
 export const Calculators: React.FC<CalculatorsProps> = ({ onExit }) => {
   const { currencySymbol } = useApp();
   const [activeCalc, setActiveCalc] = useState<CalcType>('sip');
+
+  // Live Currency Converter State
+  const [currAmount, setCurrAmount] = useState<number>(100);
+  const [currFrom, setCurrFrom] = useState<string>('USD');
+  const [currTo, setCurrTo] = useState<string>('INR');
+  const [currResult, setCurrResult] = useState<number | null>(null);
+  const [currRate, setCurrRate] = useState<number | null>(null);
+  const [currSource, setCurrSource] = useState<string>('Frankfurter ECB');
+  const [currFreshness, setCurrFreshness] = useState<string>('live');
+  const [currTimestamp, setCurrTimestamp] = useState<string>('');
+  const [currLoading, setCurrLoading] = useState<boolean>(false);
+  const [popularRates, setPopularRates] = useState<Record<string, number>>({});
+
+  const handleConvertCurrency = async () => {
+    if (currAmount <= 0) return;
+    setCurrLoading(true);
+    try {
+      const res = await convertCurrencyApi(currAmount, currFrom, currTo);
+      if (res && res.success) {
+        setCurrResult(res.result);
+        setCurrRate(res.rate);
+        if (res.source) setCurrSource(res.source);
+        if (res.freshness) setCurrFreshness(res.freshness);
+        if (res.timestamp) setCurrTimestamp(res.timestamp);
+      }
+    } finally {
+      setCurrLoading(false);
+    }
+  };
+
+  const handleSwapCurrencies = () => {
+    const temp = currFrom;
+    setCurrFrom(currTo);
+    setCurrTo(temp);
+  };
+
+  useEffect(() => {
+    if (activeCalc === 'currency') {
+      handleConvertCurrency();
+      fetchCurrencyLatestApi('USD').then(res => {
+        if (res && res.rates) {
+          const inrPerUsd = res.rates['INR'] || 83.75;
+          setPopularRates({
+            USD: Number(inrPerUsd.toFixed(2)),
+            EUR: res.rates['EUR'] ? Number((inrPerUsd / res.rates['EUR']).toFixed(2)) : 91.2,
+            GBP: res.rates['GBP'] ? Number((inrPerUsd / res.rates['GBP']).toFixed(2)) : 108.4,
+            AED: res.rates['AED'] ? Number((inrPerUsd / res.rates['AED']).toFixed(2)) : 22.8,
+            SGD: res.rates['SGD'] ? Number((inrPerUsd / res.rates['SGD']).toFixed(2)) : 62.4,
+            CAD: res.rates['CAD'] ? Number((inrPerUsd / res.rates['CAD']).toFixed(2)) : 61.5,
+            JPY: res.rates['JPY'] ? Number(((inrPerUsd / res.rates['JPY']) * 100).toFixed(2)) : 55.2
+          });
+        }
+      });
+    }
+  }, [activeCalc, currFrom, currTo, currAmount]);
 
   // SIP State
   const [sipMonthly, setSipMonthly] = useState<number>(10000);
@@ -112,6 +168,12 @@ export const Calculators: React.FC<CalculatorsProps> = ({ onExit }) => {
           className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${activeCalc === 'inflation' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-400 hover:text-slate-200'}`}
         >
           Inflation Impact Calculator
+        </button>
+        <button 
+          onClick={() => setActiveCalc('currency')}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 ${activeCalc === 'currency' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:text-slate-200'}`}
+        >
+          <Globe className="w-3.5 h-3.5" /> Live Currency Converter (Frankfurter ECB)
         </button>
       </div>
 
@@ -289,6 +351,128 @@ export const Calculators: React.FC<CalculatorsProps> = ({ onExit }) => {
           <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 text-center">
             <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider block">Future Cost in {infYears} Years</span>
             <p className="text-3xl font-black text-indigo-400 mt-1">{currencySymbol}{infFutureCost.toLocaleString()}</p>
+          </div>
+        </div>
+      )}
+
+      {/* LIVE CURRENCY CONVERTER */}
+      {activeCalc === 'currency' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Interactive Converter Card */}
+          <div className="glass-panel rounded-3xl p-6 bg-slate-900/60 border-slate-800 space-y-5 text-xs">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                <Globe className="w-4 h-4 text-blue-400" /> Real-Time Foreign Exchange Converter
+              </h2>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> {currFreshness}
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-slate-400 mb-1 font-semibold">Transfer Amount</label>
+              <input 
+                type="number" 
+                min="1" 
+                value={currAmount} 
+                onChange={(e) => setCurrAmount(Math.max(1, Number(e.target.value)))} 
+                className="w-full p-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-base font-bold focus:outline-none focus:border-blue-500" 
+              />
+            </div>
+
+            <div className="grid grid-cols-[1fr,auto,1fr] gap-3 items-center">
+              <div>
+                <label className="block text-slate-400 mb-1 font-semibold">From Currency</label>
+                <select 
+                  value={currFrom} 
+                  onChange={(e) => setCurrFrom(e.target.value)} 
+                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 font-bold"
+                >
+                  {['USD', 'INR', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'SGD', 'AED', 'CHF', 'CNY', 'NZD', 'SAR'].map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pt-5">
+                <button 
+                  onClick={handleSwapCurrencies}
+                  className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors"
+                  title="Swap Currencies"
+                >
+                  <ArrowRightLeft className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1 font-semibold">To Currency</label>
+                <select 
+                  value={currTo} 
+                  onChange={(e) => setCurrTo(e.target.value)} 
+                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 font-bold"
+                >
+                  {['INR', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'SGD', 'AED', 'CHF', 'CNY', 'NZD', 'SAR'].map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Result Display */}
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-950/40 via-slate-950/80 to-slate-900 border border-blue-500/30 space-y-2">
+              <span className="text-[10px] text-blue-300 font-bold uppercase tracking-wider block">
+                Calculated Live Value
+              </span>
+              <div className="flex items-baseline justify-between">
+                <p className="text-2xl sm:text-3xl font-black text-white">
+                  {currLoading ? 'Calculating...' : `${currResult !== null ? currResult.toLocaleString() : '---'} ${currTo}`}
+                </p>
+                {currRate && (
+                  <span className="text-xs text-slate-400 font-medium">
+                    1 {currFrom} = {currRate} {currTo}
+                  </span>
+                )}
+              </div>
+              <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-2">
+                <span className="flex items-center gap-1 text-slate-300">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" /> Source: {currSource}
+                </span>
+                {currTimestamp && (
+                  <span className="flex items-center gap-1 text-slate-400">
+                    <Clock className="w-3 h-3" /> Updated: {new Date(currTimestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Reference Rates Matrix Card */}
+          <div className="glass-panel rounded-3xl p-6 bg-slate-900/60 border-slate-800 space-y-4 text-xs">
+            <h2 className="text-sm font-bold text-white flex items-center justify-between">
+              <span>Benchmark FX Spot Rates (vs INR)</span>
+              <span className="text-[10px] text-slate-400 font-normal">Frankfurter Keyless ECB Feed</span>
+            </h2>
+
+            <div className="divide-y divide-slate-800/60">
+              {Object.entries(popularRates).map(([curr, rate]) => (
+                <div key={curr} className="py-2.5 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center font-bold text-slate-200 text-xs">
+                      {curr}
+                    </span>
+                    <div>
+                      <span className="font-semibold text-slate-200">1 {curr}</span>
+                      <span className="text-[10px] text-slate-400 block">Foreign Exchange Spot</span>
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold text-emerald-400">₹{rate.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-[11px] text-slate-400">
+              💡 Rates are fetched directly from European Central Bank & Open Exchange benchmarks via Grow 0.2 Universal API Manager, cached in backend memory with 1-hour TTL to prevent rate limits.
+            </div>
           </div>
         </div>
       )}

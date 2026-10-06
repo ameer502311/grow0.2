@@ -46,7 +46,8 @@ export class OpenAiAgentsService {
     io = null,
     memoryStore = null
   }) {
-    const activeKey = apiKey || process.env.OPENAI_API_KEY || process.env.AI_API_KEY || '';
+    const groqKey = process.env.GROQ_API_KEY && process.env.GROQ_API_KEY !== 'your_groq_api_key_here' ? process.env.GROQ_API_KEY : '';
+    const activeKey = apiKey || groqKey || process.env.OPENAI_API_KEY || process.env.AI_API_KEY || '';
     const sessionId = `agent-sess-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const createdAt = new Date().toISOString();
 

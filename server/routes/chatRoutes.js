@@ -164,9 +164,9 @@ export function createChatRouter(memoryStore) {
   const router = express.Router();
 
   // GET /api/market-prices - Fetch Real-time Market Prices
-  router.get('/market-prices', (req, res) => {
+  router.get('/market-prices', async (req, res) => {
     try {
-      const data = MarketDataService.getMarketPrices();
+      const data = await MarketDataService.getMarketPrices();
       res.json({
         success: true,
         data
@@ -184,8 +184,16 @@ export function createChatRouter(memoryStore) {
       return res.status(400).json({ error: 'Message field is required and must be a non-empty string.' });
     }
 
-    const activeKey = apiKey || process.env.OPENAI_API_KEY || process.env.AI_API_KEY || '';
-    const selectedModel = process.env.OPENAI_MODEL || 'gpt-4o';
+    const groqKey = process.env.GROQ_API_KEY && process.env.GROQ_API_KEY !== 'your_groq_api_key_here' ? process.env.GROQ_API_KEY : '';
+    const activeKey = apiKey || groqKey || process.env.OPENAI_API_KEY || process.env.AI_API_KEY || '';
+    
+    // Automatically detect Groq provider or user preference
+    const isGroq = activeKey.startsWith('gsk_') || Boolean(groqKey && activeKey === groqKey);
+    const selectedModel = isGroq 
+      ? (process.env.GROQ_MODEL || 'llama-3.3-70b-versatile') 
+      : (process.env.OPENAI_MODEL || 'gpt-4o');
+    const baseURL = isGroq ? 'https://api.groq.com/openai/v1' : undefined;
+
     const convId = conversation_id || `conv-${Date.now()}`;
 
     // Setup SSE Headers
@@ -206,7 +214,7 @@ export function createChatRouter(memoryStore) {
     const conv = conversationsStore.get(convId);
     conv.messages.push(userMsgObj);
 
-    // Build chat history for OpenAI
+    // Build chat history for OpenAI / Groq
     const formattedMessages = [{ role: 'system', content: SYSTEM_PROMPT }];
     messages.forEach(m => {
       if (m.role && m.content) formattedMessages.push({ role: m.role, content: m.content });
@@ -215,18 +223,21 @@ export function createChatRouter(memoryStore) {
 
     let fullAssistantResponse = '';
 
-    // Stream directly via official OpenAI API if valid API key is available
-    if (activeKey && activeKey.startsWith('sk-')) {
+    // Stream directly via Groq LPU or OpenAI API if valid API key is available
+    if (activeKey && (activeKey.startsWith('gsk_') || activeKey.startsWith('sk-') || isGroq)) {
       try {
-        const openai = new OpenAI({ apiKey: activeKey });
+        const client = new OpenAI({ 
+          apiKey: activeKey, 
+          baseURL: baseURL 
+        });
         
         // Initial completion call with tools enabled
-        const responseStream = await openai.chat.completions.create({
+        const responseStream = await client.chat.completions.create({
           model: selectedModel,
           messages: formattedMessages,
           tools: OPENAI_TOOLS,
           stream: true,
-          max_tokens: Number(process.env.OPENAI_MAX_OUTPUT_TOKENS || 1200)
+          max_tokens: Number(process.env.GROQ_MAX_OUTPUT_TOKENS || process.env.OPENAI_MAX_OUTPUT_TOKENS || 1500)
         });
 
         let toolCallsToExecute = [];
@@ -308,7 +319,7 @@ export function createChatRouter(memoryStore) {
           }
 
           // Follow-up stream after tool response
-          const secondStream = await openai.chat.completions.create({
+          const secondStream = await client.chat.completions.create({
             model: selectedModel,
             messages: formattedMessages,
             stream: true

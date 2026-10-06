@@ -253,7 +253,7 @@ export const Investments: React.FC<InvestmentsProps> = ({ onOpenBuyGold, onExit 
                     <span className="text-[10px] text-slate-400">Live Feed</span>
                   </div>
                   <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-2">
-                    ₹{goldTicker?.price.toLocaleString() || '74,500'}
+                    ₹{goldTicker?.price?.toLocaleString() || '74,500'}
                   </p>
                   <div className="flex items-center gap-1.5 mt-2">
                     <span className="inline-flex items-center text-xs font-semibold text-emerald-600 dark:text-emerald-400">
@@ -283,7 +283,7 @@ export const Investments: React.FC<InvestmentsProps> = ({ onOpenBuyGold, onExit 
                     <span className="text-[10px] text-slate-400">Live Feed</span>
                   </div>
                   <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-2">
-                    ₹{silverTicker?.price.toLocaleString() || '89,200'}
+                    ₹{silverTicker?.price?.toLocaleString() || '89,200'}
                   </p>
                   <div className="flex items-center gap-1.5 mt-2">
                     <span className="inline-flex items-center text-xs font-semibold text-red-600 dark:text-red-400">

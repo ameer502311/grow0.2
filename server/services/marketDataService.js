@@ -79,10 +79,10 @@ export class MarketDataService {
   static getBudgetSummary(memoryStore = null) {
     if (!memoryStore) {
       return {
-        totalMonthlyIncome: 185000,
-        totalMonthlyExpenses: 69500,
-        netSavings: 115500,
-        savingsRatePercent: 62.4,
+        totalMonthlyIncome: 0,
+        totalMonthlyExpenses: 0,
+        netSavings: 0,
+        savingsRatePercent: 0,
         currency: "INR"
       };
     }

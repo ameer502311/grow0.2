@@ -32,8 +32,9 @@ const io = new Server(server, {
   cors: { origin: '*', methods: ['GET', 'POST'] }
 });
 
-// System Configured AI API Key dynamically loaded from environment
-const SYSTEM_AI_API_KEY = process.env.AI_API_KEY || process.env.GEMINI_API_KEY || '';
+// System Configured AI API Keys dynamically loaded from environment
+const GROQ_API_KEY = process.env.GROQ_API_KEY && process.env.GROQ_API_KEY !== 'your_groq_api_key_here' ? process.env.GROQ_API_KEY : '';
+const SYSTEM_AI_API_KEY = GROQ_API_KEY || process.env.AI_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY || '';
 
 // Optional MongoDB Atlas Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/grow02';
@@ -41,50 +42,27 @@ mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 2000 })
   .then(() => console.log('🍃 MongoDB Database connected successfully.'))
   .catch(err => console.log('⚠️ MongoDB offline, using real-time memory persistence layer: ', err.message));
 
-// In-Memory Database Store
+// In-Memory Database Store (Initialized empty for real-time tracking)
 let dbUser = {
   id: 'u-101',
-  name: 'Alex Vance',
-  email: 'alex.vance@fintech.io',
-  phone: '+91 98765 43210',
+  name: 'User',
+  email: 'user@growfintech.io',
+  phone: '',
   role: 'USER',
   isVerified: true,
   currency: 'INR',
-  monthlyIncomeTarget: 185000,
-  preferredAiModel: 'CHATGPT',
-  geminiApiKey: SYSTEM_AI_API_KEY,
-  openaiApiKey: SYSTEM_AI_API_KEY
+  monthlyIncomeTarget: 0,
+  preferredAiModel: 'GROQ',
+  groqApiKey: GROQ_API_KEY,
+  geminiApiKey: process.env.GEMINI_API_KEY || '',
+  openaiApiKey: process.env.OPENAI_API_KEY || ''
 };
 
-let dbIncomes = [
-  { id: 'inc-1', amount: 145000, date: '2026-07-01', category: 'Salary', notes: 'Monthly Tech Salary' },
-  { id: 'inc-2', amount: 28000, date: '2026-07-12', category: 'Freelance', notes: 'UI Design Consulting' },
-  { id: 'inc-3', amount: 12000, date: '2026-07-18', category: 'Rental', notes: 'Studio Apartment Rent' }
-];
-
-let dbExpenses = [
-  { id: 'exp-1', amount: 24000, date: '2026-07-02', category: 'Rent', notes: 'House Rent' },
-  { id: 'exp-2', amount: 14500, date: '2026-07-05', category: 'Food', notes: 'Groceries & Gourmet Dining' },
-  { id: 'exp-3', amount: 8200, date: '2026-07-08', category: 'Shopping', notes: 'Workwear & Electronics' },
-  { id: 'exp-4', amount: 4800, date: '2026-07-10', category: 'Fuel', notes: 'Car Petrol Fill' },
-  { id: 'exp-5', amount: 18500, date: '2026-07-15', category: 'EMI', notes: 'Car Loan Monthly Payment' }
-];
-
-let dbInvestments = [
-  { id: 'inv-1', name: 'SafeGold 24K 99.9% Pure', category: 'Gold', investedAmount: 180000, currentValue: 224000, purchaseDate: '2024-03-10' },
-  { id: 'inv-2', name: 'Groww Nifty 50 Index Fund SIP', category: 'Mutual Funds', investedAmount: 340000, currentValue: 432000, purchaseDate: '2023-01-15' },
-  { id: 'inv-3', name: 'TCS & Reliance Equity (Zerodha)', category: 'Stocks', investedAmount: 210000, currentValue: 258000, purchaseDate: '2023-11-20' },
-  { id: 'inv-4', name: 'Bitcoin (0.12 BTC)', category: 'Crypto', investedAmount: 380000, currentValue: 672000, purchaseDate: '2023-06-05' }
-];
-
-let dbLoans = [
-  { id: 'l-1', title: 'Hyundai Creta EV Loan', type: 'Car Loan', principalAmount: 1200000, remainingBalance: 780000, interestRate: 8.75, tenureMonths: 60, monthlyEmi: 18500, dueDateDay: 10, startDate: '2024-01-10' },
-  { id: 'l-2', title: 'HDFC Infinia Credit Card Balance', type: 'Credit Card', principalAmount: 45000, remainingBalance: 12500, interestRate: 14.5, tenureMonths: 12, monthlyEmi: 4200, dueDateDay: 22, startDate: '2026-05-01' }
-];
-
-let dbPayments = [
-  { id: 'tx-101', provider: 'GPay', amount: 5000, purpose: 'Digital Gold Buy', status: 'SUCCESS', referenceNo: 'UPI/6192840192', timestamp: '2026-07-27 16:30' }
-];
+let dbIncomes = [];
+let dbExpenses = [];
+let dbInvestments = [];
+let dbLoans = [];
+let dbPayments = [];
 
 // Live Market Tickers Base
 let currentTickers = [
@@ -113,8 +91,10 @@ app.get('/api/health', (req, res) => {
     status: 'OK', 
     connected: true,
     realtimeWebsockets: true,
+    groqConfigured: Boolean(GROQ_API_KEY),
+    preferredAiProvider: GROQ_API_KEY ? 'GROQ_LPU' : 'RULE_ENGINE',
     aiApiKeyConfigured: Boolean(SYSTEM_AI_API_KEY),
-    message: 'Grow 0.2 Real-Time API Server Operational with AI Key Integration',
+    message: 'Grow 0.2 Real-Time API Server Operational with Groq LPU & AI Integration',
     timestamp: new Date().toISOString()
   });
 });
@@ -124,10 +104,189 @@ app.get('/api/markets/live-prices', (req, res) => {
 });
 
 app.get('/api/user/profile', (req, res) => res.json({ success: true, data: dbUser }));
+const handleAddIncome = (req, res) => {
+  const { amount, date, category, notes, isRecurring } = req.body;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const newInc = {
+    id: req.body.id || `inc-${Date.now()}`,
+    amount: parseFloat(amount) || 0,
+    date: date || todayStr,
+    category: category || 'Salary',
+    notes: notes || '',
+    isRecurring: Boolean(isRecurring)
+  };
+  dbIncomes.unshift(newInc);
+  memoryStore.dbIncomes = dbIncomes;
+
+  if (memoryStore.dbTodayTransactions && newInc.date === todayStr) {
+    if (!memoryStore.dbTodayTransactions.some(t => t.id === newInc.id)) {
+      memoryStore.dbTodayTransactions.unshift({
+        id: newInc.id,
+        amount: newInc.amount,
+        type: 'INCOME',
+        category: newInc.category,
+        description: newInc.notes || 'Income Registered',
+        payment_method: 'Bank / Direct',
+        transaction_date: newInc.date,
+        time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+        status: 'COMPLETED'
+      });
+    }
+  }
+
+  io.emit('income-added', newInc);
+  res.json({ success: true, data: newInc });
+};
+
+const handleDeleteIncome = (req, res) => {
+  dbIncomes = dbIncomes.filter(i => i.id !== req.params.id);
+  memoryStore.dbIncomes = dbIncomes;
+  if (memoryStore.dbTodayTransactions) {
+    memoryStore.dbTodayTransactions = memoryStore.dbTodayTransactions.filter(t => t.id !== req.params.id);
+  }
+  io.emit('income-deleted', { id: req.params.id });
+  res.json({ success: true, message: 'Income removed' });
+};
+
 app.get('/api/finance/incomes', (req, res) => res.json({ success: true, data: dbIncomes }));
+app.get('/api/incomes', (req, res) => res.json({ success: true, data: dbIncomes }));
+app.post('/api/finance/incomes', handleAddIncome);
+app.post('/api/incomes', handleAddIncome);
+app.delete('/api/finance/incomes/:id', handleDeleteIncome);
+app.delete('/api/incomes/:id', handleDeleteIncome);
+
+const handleAddExpense = (req, res) => {
+  const { amount, date, category, notes, isRecurring } = req.body;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const newExp = {
+    id: req.body.id || `exp-${Date.now()}`,
+    amount: parseFloat(amount) || 0,
+    date: date || todayStr,
+    category: category || 'Others',
+    notes: notes || '',
+    isRecurring: Boolean(isRecurring)
+  };
+  dbExpenses.unshift(newExp);
+  memoryStore.dbExpenses = dbExpenses;
+
+  if (memoryStore.dbTodayTransactions && newExp.date === todayStr) {
+    if (!memoryStore.dbTodayTransactions.some(t => t.id === newExp.id)) {
+      memoryStore.dbTodayTransactions.unshift({
+        id: newExp.id,
+        amount: newExp.amount,
+        type: 'EXPENSE',
+        category: newExp.category,
+        description: newExp.notes || 'Expense Registered',
+        payment_method: 'GPay / UPI',
+        transaction_date: newExp.date,
+        time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+        status: 'COMPLETED'
+      });
+    }
+  }
+
+  io.emit('expense-added', newExp);
+  res.json({ success: true, data: newExp });
+};
+
+const handleDeleteExpense = (req, res) => {
+  dbExpenses = dbExpenses.filter(e => e.id !== req.params.id);
+  memoryStore.dbExpenses = dbExpenses;
+  if (memoryStore.dbTodayTransactions) {
+    memoryStore.dbTodayTransactions = memoryStore.dbTodayTransactions.filter(t => t.id !== req.params.id);
+  }
+  io.emit('expense-deleted', { id: req.params.id });
+  res.json({ success: true, message: 'Expense removed' });
+};
+
 app.get('/api/finance/expenses', (req, res) => res.json({ success: true, data: dbExpenses }));
+app.get('/api/expenses', (req, res) => res.json({ success: true, data: dbExpenses }));
+app.post('/api/finance/expenses', handleAddExpense);
+app.post('/api/expenses', handleAddExpense);
+app.delete('/api/finance/expenses/:id', handleDeleteExpense);
+app.delete('/api/expenses/:id', handleDeleteExpense);
+
 app.get('/api/investments', (req, res) => res.json({ success: true, data: dbInvestments }));
+app.post('/api/investments', (req, res) => {
+  const { name, category, investedAmount, currentValue, units, buyPrice, purchaseDate, notes } = req.body;
+  const newInv = {
+    id: req.body.id || `inv-${Date.now()}`,
+    name: name || 'Investment Asset',
+    category: category || 'Mutual Funds',
+    investedAmount: parseFloat(investedAmount) || 0,
+    currentValue: parseFloat(currentValue) || parseFloat(investedAmount) || 0,
+    units: parseFloat(units) || 1,
+    buyPrice: parseFloat(buyPrice) || 0,
+    purchaseDate: purchaseDate || new Date().toISOString().slice(0, 10),
+    notes: notes || ''
+  };
+  dbInvestments.unshift(newInv);
+  memoryStore.dbInvestments = dbInvestments;
+  io.emit('investment-added', newInv);
+  res.json({ success: true, data: newInv });
+});
+app.delete('/api/investments/:id', (req, res) => {
+  dbInvestments = dbInvestments.filter(i => i.id !== req.params.id);
+  memoryStore.dbInvestments = dbInvestments;
+  res.json({ success: true, message: 'Investment removed' });
+});
+
 app.get('/api/loans', (req, res) => res.json({ success: true, data: dbLoans }));
+app.post('/api/loans', (req, res) => {
+  const { title, type, principalAmount, remainingBalance, interestRate, tenureMonths, monthlyEmi, dueDateDay, startDate } = req.body;
+  const newLoan = {
+    id: req.body.id || `l-${Date.now()}`,
+    title: title || 'Loan',
+    type: type || 'Personal Loan',
+    principalAmount: parseFloat(principalAmount) || 0,
+    remainingBalance: parseFloat(remainingBalance) || parseFloat(principalAmount) || 0,
+    interestRate: parseFloat(interestRate) || 10,
+    tenureMonths: parseInt(tenureMonths) || 12,
+    monthlyEmi: parseFloat(monthlyEmi) || 0,
+    dueDateDay: parseInt(dueDateDay) || 1,
+    startDate: startDate || new Date().toISOString().slice(0, 10)
+  };
+  dbLoans.unshift(newLoan);
+  memoryStore.dbLoans = dbLoans;
+  res.json({ success: true, data: newLoan });
+});
+app.post('/api/loans/:id/pay', (req, res) => {
+  const loan = dbLoans.find(l => l.id === req.params.id);
+  if (loan) {
+    loan.remainingBalance = Math.max(0, loan.remainingBalance - loan.monthlyEmi);
+    const tx = {
+      id: `tx-${Date.now()}`,
+      provider: 'UPI',
+      amount: loan.monthlyEmi,
+      purpose: 'EMI Payment',
+      status: 'SUCCESS',
+      referenceNo: `EMI/${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16)
+    };
+    dbPayments.unshift(tx);
+    memoryStore.dbPayments = dbPayments;
+    io.emit('new-payment-alert', tx);
+    return res.json({ success: true, data: loan, transaction: tx });
+  }
+  res.status(404).json({ success: false, error: 'Loan not found' });
+});
+app.delete('/api/loans/:id', (req, res) => {
+  dbLoans = dbLoans.filter(l => l.id !== req.params.id);
+  memoryStore.dbLoans = dbLoans;
+  res.json({ success: true, message: 'Loan removed' });
+});
+
+app.post('/api/user/profile', (req, res) => {
+  dbUser = { ...dbUser, ...req.body };
+  memoryStore.dbUser = dbUser;
+  res.json({ success: true, data: dbUser });
+});
+app.put('/api/user/profile', (req, res) => {
+  dbUser = { ...dbUser, ...req.body };
+  memoryStore.dbUser = dbUser;
+  res.json({ success: true, data: dbUser });
+});
+
 app.get('/api/payments/transactions', (req, res) => res.json({ success: true, data: dbPayments }));
 
 app.post('/api/payments/process', (req, res) => {
@@ -147,7 +306,52 @@ app.post('/api/payments/process', (req, res) => {
   res.json({ success: true, data: tx });
 });
 
-// AI Proxies with Environment Configured System API Key
+// AI Proxies with Environment Configured System API Key (Groq LPU Primary)
+app.post('/api/ai/groq', async (req, res) => {
+  const { prompt, apiKey } = req.body;
+  const activeKey = apiKey || GROQ_API_KEY;
+  if (!activeKey) {
+    return res.json({ 
+      success: true,
+      provider: 'GROQ_RULE_ENGINE',
+      reply: `⚡ Groq LPU Financial Advisor evaluated: "${prompt}". Recommendation: Maintain 60% Nifty Index / 20% SafeGold / 20% FD. (Configure GROQ_API_KEY in .env for live Llama 3.3 generation).` 
+    });
+  }
+  try {
+    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${activeKey}`
+      },
+      body: JSON.stringify({
+        model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: 'You are Grow 0.2 Financial Advisor powered by Groq LPU. Provide clear, concise personal finance guidance.' },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 400
+      })
+    });
+    if (groqRes.ok) {
+      const data = await groqRes.json();
+      return res.json({ 
+        success: true, 
+        provider: 'GROQ_LPU', 
+        model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+        reply: data.choices?.[0]?.message?.content 
+      });
+    }
+  } catch (err) {
+    console.warn('⚠️ Groq endpoint note:', err.message);
+  }
+  res.json({ 
+    success: true,
+    provider: 'GROQ_FALLBACK',
+    reply: `⚡ Groq LPU Financial Engine evaluated: "${prompt}". Recommendation: Increase monthly SIP step-up by 10% and maintain a 3-month liquid cash buffer.` 
+  });
+});
+
 app.post('/api/ai/advisor', (req, res) => {
   const { prompt, apiKey } = req.body;
   const keyToUse = apiKey || SYSTEM_AI_API_KEY;
@@ -171,8 +375,10 @@ app.post('/api/ai/chatgpt', (req, res) => {
 // Memory Store reference for financial services
 const memoryStore = { dbUser, dbIncomes, dbExpenses, dbInvestments, dbLoans, dbPayments };
 
-// Mount Financial Router
-app.use('/api/financial', createFinancialRouter(memoryStore, io));
+// Mount Financial Router (accessible at both /api/financial/* and /api/*)
+const financialRouter = createFinancialRouter(memoryStore, io);
+app.use('/api/financial', financialRouter);
+app.use('/api', financialRouter);
 
 // Mount Smart Bill & Payments Router
 const billRouter = createBillRouter(memoryStore, io);

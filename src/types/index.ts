@@ -1,6 +1,6 @@
 export type UserRole = 'USER' | 'ADMIN';
 export type CurrencyCode = 'INR' | 'USD' | 'EUR' | 'GBP';
-export type AiModelProvider = 'GEMINI' | 'CHATGPT' | 'OPENAI_AGENTS';
+export type AiModelProvider = 'GROQ' | 'GEMINI' | 'CHATGPT' | 'OPENAI_AGENTS';
 
 export type ActiveTab = 
   | 'dashboard' 
@@ -30,6 +30,7 @@ export interface UserProfile {
   isVerified: boolean;
   currency: CurrencyCode;
   monthlyIncomeTarget?: number;
+  groqApiKey?: string;
   geminiApiKey?: string;
   openaiApiKey?: string;
   preferredAiModel: AiModelProvider;
